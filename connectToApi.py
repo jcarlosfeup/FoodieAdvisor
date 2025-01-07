@@ -1,7 +1,9 @@
 import requests
 import time
+import pandas as pd
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
+from storage import write_df_to_csv
 
 
 API_KEY = "AIzaSyBOHqgJq1SLlb7-IIzntJrRwNUX0Wt7Anw"
@@ -67,4 +69,10 @@ if __name__ == "__main__":
             break
 
     print(result)
+
+    df = pd.DataFrame(result)
+    df.rename(columns={"displayName": "name"}, inplace=True)
+    df['name'] = df['name'].apply(lambda x: x['text'])
+
     print(f"Number of restaurants found: {len(result)}")
+    write_df_to_csv(df, "restaurants")
