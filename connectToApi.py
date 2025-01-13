@@ -3,13 +3,12 @@ import time
 import pandas as pd
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
-from storage import write_df_to_csv
+from storage import ReadWriterCSVHandler
 
 
 API_KEY = "AIzaSyBOHqgJq1SLlb7-IIzntJrRwNUX0Wt7Anw"
 BASE_URL = "https://places.googleapis.com/v1/places:searchText"
-SERVICE_ACCOUNT_FILE = "foodie-advisor-e02c03a87c85.json"
-
+SERVICE_ACCOUNT_FILE = "foodie-advisor-819220732215.json"
 
 credentials = service_account.Credentials.from_service_account_file(
     SERVICE_ACCOUNT_FILE, scopes=["https://www.googleapis.com/auth/cloud-platform"]
@@ -74,5 +73,8 @@ if __name__ == "__main__":
     df.rename(columns={"displayName": "name"}, inplace=True)
     df['name'] = df['name'].apply(lambda x: x['text'])
 
+    local_writer = ReadWriterCSVHandler("restaurants.csv", df)
+
+
     print(f"Number of restaurants found: {len(result)}")
-    write_df_to_csv(df, "restaurants")
+    local_writer.write_df_to_csv(df, "restaurants")
