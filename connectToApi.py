@@ -6,7 +6,6 @@ from google.auth.transport.requests import Request
 from storage import ReadWriterCSVHandler
 
 
-API_KEY = "AIzaSyBOHqgJq1SLlb7-IIzntJrRwNUX0Wt7Anw"
 BASE_URL = "https://places.googleapis.com/v1/places:searchText"
 SERVICE_ACCOUNT_FILE = "foodie-advisor-819220732215.json"
 
