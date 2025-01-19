@@ -35,7 +35,7 @@ class ReadWriterCSVHandler:
 if __name__ == "__main__":
     bucket_writer = ReadWriterCSVHandler(filename=FILENAME,
                                          bucket_name=BUCKET_NAME)
-    bucket_writer.upload_dataframe_to_gcs()
+    #bucket_writer.upload_dataframe_to_gcs()
     bucket_writer.read_df_from_bucket()
 
     print(bucket_writer.df)
