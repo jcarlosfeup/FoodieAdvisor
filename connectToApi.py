@@ -3,7 +3,7 @@ import time
 import pandas as pd
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
-from storage import ReadWriterCSVHandler
+from storage import ReadWriterCSVHandler, BUCKET_NAME, FILENAME
 
 
 BASE_URL = "https://places.googleapis.com/v1/places:searchText"
@@ -23,7 +23,7 @@ def make_api_call(token, next_page_token, search_text: str):
     header = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
-        "X-Goog-FieldMask": "places.displayName,places.id,places.primaryType,places.rating,places.userRatingCount,places.priceLevel,nextPageToken",
+        "X-Goog-FieldMask": "places.displayName,places.id,places.primaryType,places.rating,places.userRatingCount,places.priceLevel,places.location,places.viewport,nextPageToken",
     }
 
     body = {
@@ -41,6 +41,19 @@ def make_api_call(token, next_page_token, search_text: str):
 
     return response
 
+# TODO
+# def connect
+# def collect_data():
+
+def transform(df: pd.DataFrame) -> pd.DataFrame:
+    df.rename(columns={"displayName": "name"}, inplace=True)
+    df['name'] = df['name'].apply(lambda x: x['text'])
+    df['latitude'] = df['location'].apply(lambda loc: loc.get('latitude', None))
+    df['longitude'] = df['location'].apply(lambda loc: loc.get('longitude', None))
+    df['city'] = 'Porto'   # TODO change to dynamic code
+
+    return df.drop(columns=['location'])
+
 
 if __name__ == "__main__":
     access_token = get_access_token(credentials)
@@ -55,7 +68,7 @@ if __name__ == "__main__":
             next_page_token=next_page_token,
             search_text="Portuguese traditional food in Porto, Portugal",
         )
-
+        print(response)
         next_page_token = response.get("nextPageToken")
         result.extend(response.get("places"))
 
@@ -69,11 +82,12 @@ if __name__ == "__main__":
     print(result)
 
     df = pd.DataFrame(result)
-    df.rename(columns={"displayName": "name"}, inplace=True)
-    df['name'] = df['name'].apply(lambda x: x['text'])
+    df = transform(df)
 
-    local_writer = ReadWriterCSVHandler("restaurants.csv", df)
-
+    local_writer = ReadWriterCSVHandler(filename=FILENAME,
+                                        bucket_name=BUCKET_NAME,
+                                        df=df)
 
     print(f"Number of restaurants found: {len(result)}")
-    local_writer.write_df_to_csv(df, "restaurants")
+    local_writer.write_df_to_csv()
+    local_writer.upload_dataframe_to_gcs()

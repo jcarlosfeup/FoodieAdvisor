@@ -1,61 +1,61 @@
-,id,rating,priceLevel,userRatingCount,name,primaryType
-0,ChIJcQN2RJNkJA0RQpVpcz7W8_E,4.5,PRICE_LEVEL_MODERATE,1252,A Cozinha do Manel,restaurant
-1,ChIJASsyqPtkJA0R5Nbt_TNLDdU,4.5,PRICE_LEVEL_MODERATE,3763,Antunes,restaurant
-2,ChIJjydX6eBkJA0RFhdlrSecHpg,4.5,PRICE_LEVEL_INEXPENSIVE,1666,Escondidinho do Barredo,restaurant
-3,ChIJqangsgtlJA0Ro6sj_WCuIN0,4.8,PRICE_LEVEL_INEXPENSIVE,971,Casa Viúva,restaurant
-4,ChIJD-Fadx5lJA0RdSIMj_F_gdI,4.5,PRICE_LEVEL_INEXPENSIVE,3710,Taberna Santo António,restaurant
-5,ChIJqZU2HuVkJA0RnoPeIx_GKcM,4.5,PRICE_LEVEL_MODERATE,5008,Abadia do Porto,restaurant
-6,ChIJ-aBV2eNkJA0RYhIyy5si0dE,4.8,PRICE_LEVEL_INEXPENSIVE,3711,"""VOLTARIA"" - Petisqueira Portuguesa",restaurant
-7,ChIJAw0pouFkJA0RPNw87OxBZ4M,4.5,PRICE_LEVEL_INEXPENSIVE,1139,Tasquinha Da Paula,restaurant
-8,ChIJpUeLQNNlJA0R3cq5AC6-1QU,4.6,PRICE_LEVEL_MODERATE,2082,Muro do Bacalhau,restaurant
-9,ChIJ3Y6dteNkJA0R0h7Eo919-Go,4.7,PRICE_LEVEL_INEXPENSIVE,1752,Restaurante Cana Verde,restaurant
-10,ChIJj5ujm19lJA0RzuT8waE1q2M,4.6,PRICE_LEVEL_MODERATE,1644,Casa Guedes Oliveiras,restaurant
-11,ChIJb7l8S-JkJA0Ra9Sr_G49kuw,4.6,PRICE_LEVEL_INEXPENSIVE,2242,Flor de Bragança,restaurant
-12,ChIJMZYIIVRkJA0RQ0VKG5D-Ogs,4.6,PRICE_LEVEL_INEXPENSIVE,2364,Augusto,restaurant
-13,ChIJj2WnPu9kJA0RtToi37tMeqs,4.9,PRICE_LEVEL_MODERATE,1280,DAMA pé de cabra,restaurant
-14,ChIJQ6BGzBxlJA0RJDqlHdnqXsY,4.7,PRICE_LEVEL_INEXPENSIVE,552,Tasquinha Zé Povinho,restaurant
-15,ChIJjaidch1lJA0RTsa-7QimUDc,4.5,PRICE_LEVEL_MODERATE,1310,Zé Bota,restaurant
-16,ChIJIxSnVeJkJA0RaUwFYWHkh3U,4.7,PRICE_LEVEL_MODERATE,2162,ENCAIXADOS,restaurant
-17,ChIJWUkFzRxlJA0RnyamlG-FC14,4.7,PRICE_LEVEL_INEXPENSIVE,485,Sabor Da Fazenda,restaurant
-18,ChIJlTj_BOJkJA0RKYC2YPMDxMo,4.6,PRICE_LEVEL_MODERATE,1727,Taberna d'Avó,restaurant
-19,ChIJn57Q6eBkJA0RqVv49SC9-dk,4.5,PRICE_LEVEL_MODERATE,901,Terreirinho Restaurant,restaurant
-20,ChIJIzO-_TVlJA0RCXfoSOeavNQ,4.9,,10,O Retiro do Bom Sucesso,restaurant
-21,ChIJMTxEH-BkJA0RHKaU_xuGBNo,4.5,PRICE_LEVEL_MODERATE,3582,Bacalhau,restaurant
-22,ChIJpeAfo5hlJA0RMxXxfUYSIUU,4.8,,944,Bolhão a Gosto - Comida Tradicional,restaurant
-23,ChIJY7D7buRkJA0RbELz8FNhrwo,4.6,PRICE_LEVEL_MODERATE,1143,O Rápido,restaurant
-24,ChIJIyjxk8hlJA0Ra074qEVCG5A,4.5,PRICE_LEVEL_MODERATE,3153,Casa Guedes Progresso,restaurant
-25,ChIJ_7c3FyllJA0RCqwia6mWxr4,4.6,PRICE_LEVEL_MODERATE,7486,Casa Guedes Rooftop,restaurant
-26,ChIJlRME4-9kJA0R5_N59VLD6ts,4.5,PRICE_LEVEL_MODERATE,1930,Aquele Tasco,restaurant
-27,ChIJXRHyGvtkJA0R-4SfB2-rYQM,4.7,,22,Churrasqueira Cala O Bico,restaurant
-28,ChIJzWuZEQZlJA0RzkYBf748P_g,4.7,,42,Casa Vila Verde,restaurant
-29,ChIJo7Zc_PJlJA0RErhlWbSdxdo,4.8,,915,Culto ao Bacalhau,restaurant
-30,ChIJQVhODf1kJA0RRBCINyLAJog,4.7,PRICE_LEVEL_INEXPENSIVE,661,Restaurante a Taska,restaurant
-31,ChIJbRk7tUA2ZkARmN8b6koD2Uk,4.6,PRICE_LEVEL_INEXPENSIVE,838,Restaurante Universal Porto,restaurant
-32,ChIJKQZ_BO9kJA0RjzzxAsmQ9gc,4.5,PRICE_LEVEL_INEXPENSIVE,1090,Restaurante Roma,restaurant
-33,ChIJfZeJ021kJA0R0Zac3EReEeE,4.6,PRICE_LEVEL_VERY_EXPENSIVE,531,O Paparico,restaurant
-34,ChIJyRYfrwJlJA0RKQQP_muW1_c,4.6,PRICE_LEVEL_MODERATE,1063,Adega Do Carregal,restaurant
-35,ChIJRzJJz15lJA0Rbpex59T1v08,4.5,PRICE_LEVEL_INEXPENSIVE,142,Tasquinha D’Ouro II,restaurant
-36,ChIJrW4kIPdkJA0RtoVTs5RG6QU,4.5,PRICE_LEVEL_EXPENSIVE,1149,Portucale,restaurant
-37,ChIJXRHyGvtkJA0RqI6tg9scNT8,4.5,PRICE_LEVEL_INEXPENSIVE,2564,Churrasqueira Lameiras,restaurant
-38,ChIJ9__9A85lJA0RLdnMcYhOFho,4.5,PRICE_LEVEL_INEXPENSIVE,730,A Tasquinha Dos Guindais,restaurant
-39,ChIJR9mM3uFkJA0RINhvAzWXWCc,4.8,PRICE_LEVEL_MODERATE,1961,Bota&Bira,restaurant
-40,ChIJbYDjeW1lJA0RAR3aiwGG2Lg,4.5,PRICE_LEVEL_MODERATE,384,Caralhau,restaurant
-41,ChIJ4ygwOeBkJA0Rf0PqemLq8zs,4.5,PRICE_LEVEL_MODERATE,1696,A Grade,restaurant
-42,ChIJR9m2aZFkJA0RQ98iyZnDCvE,4.6,PRICE_LEVEL_MODERATE,597,Restaurante Campo Alegre /Compadre,restaurant
-43,ChIJF4Xfx-NkJA0RLTxNfgpHk0Q,4.6,PRICE_LEVEL_INEXPENSIVE,837,Novo Mundo,restaurant
-44,ChIJpSSJyKBlJA0RUVkAfPU-_ZI,4.5,PRICE_LEVEL_INEXPENSIVE,649,Rosa do Porto,restaurant
-45,ChIJKwejxAllJA0R5KXISlQg5fI,4.6,PRICE_LEVEL_INEXPENSIVE,145,Cantinho dos Sabores,restaurant
-46,ChIJncrmv_xkJA0RnFNP47o4J8U,4.5,PRICE_LEVEL_INEXPENSIVE,3549,Almada Café,restaurant
-47,ChIJzdxCBe9kJA0RUyayOMxHUe8,4.6,PRICE_LEVEL_INEXPENSIVE,236,Restaurante Gondarem Baixa,restaurant
-48,ChIJKzjmOwBlJA0RR0JYO0abZiw,4.5,,247,The Portuguese Corner - Porto,restaurant
-49,ChIJv3NBtV9kJA0R_pkhKFvvGAY,4.5,PRICE_LEVEL_EXPENSIVE,543,Líder,restaurant
-50,ChIJ9WmEvBFlJA0RkItbkyMN6_M,4.6,PRICE_LEVEL_INEXPENSIVE,1028,O Caseirinho,restaurant
-51,ChIJo8t6de9kJA0RlNuBnEm6WUE,4.5,PRICE_LEVEL_INEXPENSIVE,1231,Murça No Porto,restaurant
-52,ChIJo2-WeYtlJA0R3w1HIP1Uh58,4.8,PRICE_LEVEL_MODERATE,442,Restaurante Maria Inês,restaurant
-53,ChIJR9UTu3FlJA0RQjTMCtn_H1Q,4.5,PRICE_LEVEL_INEXPENSIVE,814,Adega Rio Douro,restaurant
-54,ChIJjSlY0zFlJA0RUaiFhW4I9s0,4.5,,426,Cozinha das Flores,restaurant
-55,ChIJh6pcjQNlJA0Rly-M4hmhQSs,4.7,PRICE_LEVEL_INEXPENSIVE,445,Vasco da Gama Restaurant,restaurant
-56,ChIJm0fehdplJA0RGR0cCiKiYSo,5.0,,6,Snack Bar Oasis,restaurant
-57,ChIJFTqGsuJkJA0RJF5gry9lrlw,4.6,PRICE_LEVEL_INEXPENSIVE,1393,Casa Expresso,restaurant
-58,ChIJVVXeILBlJA0RdoqQjHoUosA,4.5,PRICE_LEVEL_INEXPENSIVE,65,Restaurante 100 Stress,restaurant
-59,ChIJ7fKginllJA0RjasYk9Et_aQ,4.6,PRICE_LEVEL_MODERATE,2425,Bulha Sá da Bandeira,restaurant
+,id,viewport,rating,priceLevel,userRatingCount,name,primaryType,latitude,longitude,city
+0,ChIJgy4W_OBkJA0RUZIgTRYC8zw,"{'low': {'latitude': 41.140097969708506, 'longitude': -8.614362930291502}, 'high': {'latitude': 41.1427959302915, 'longitude': -8.611664969708498}}",4.5,PRICE_LEVEL_MODERATE,3038,Taberna Dos Mercadores,restaurant,41.1413291,-8.6129202,Porto
+1,ChIJASsyqPtkJA0R5Nbt_TNLDdU,"{'low': {'latitude': 41.1506802697085, 'longitude': -8.609524380291502}, 'high': {'latitude': 41.1533782302915, 'longitude': -8.606826419708499}}",4.5,PRICE_LEVEL_MODERATE,3768,Antunes,restaurant,41.1520262,-8.608154899999999,Porto
+2,ChIJcQN2RJNkJA0RQpVpcz7W8_E,"{'low': {'latitude': 41.145037819708506, 'longitude': -8.594476930291503}, 'high': {'latitude': 41.147735780291505, 'longitude': -8.591778969708498}}",4.5,PRICE_LEVEL_MODERATE,1256,A Cozinha do Manel,restaurant,41.1463562,-8.5931055,Porto
+3,ChIJjydX6eBkJA0RFhdlrSecHpg,"{'low': {'latitude': 41.139301669708495, 'longitude': -8.613899830291503}, 'high': {'latitude': 41.141999630291494, 'longitude': -8.611201869708498}}",4.5,PRICE_LEVEL_INEXPENSIVE,1670,Escondidinho do Barredo,restaurant,41.1407144,-8.6123351,Porto
+4,ChIJWUkFzRxlJA0RnyamlG-FC14,"{'low': {'latitude': 41.1470671697085, 'longitude': -8.620966780291502}, 'high': {'latitude': 41.1497651302915, 'longitude': -8.618268819708497}}",4.7,PRICE_LEVEL_INEXPENSIVE,491,Sabor Da Fazenda,restaurant,41.148426199999996,-8.619638799999999,Porto
+5,ChIJpUeLQNNlJA0R3cq5AC6-1QU,"{'low': {'latitude': 41.13883956970851, 'longitude': -8.616000780291502}, 'high': {'latitude': 41.1415375302915, 'longitude': -8.6133028197085}}",4.6,PRICE_LEVEL_MODERATE,2103,Muro do Bacalhau,restaurant,41.1401707,-8.6148366,Porto
+6,ChIJUXF-eFNlJA0Rrcp7ojJrmSY,"{'low': {'latitude': 41.1391514697085, 'longitude': -8.615690130291503}, 'high': {'latitude': 41.1418494302915, 'longitude': -8.612992169708498}}",4.9,PRICE_LEVEL_MODERATE,1010,Taberna dos Fernandes,restaurant,41.140550499999996,-8.6141205,Porto
+7,ChIJj5ujm19lJA0RzuT8waE1q2M,"{'low': {'latitude': 41.148539169708506, 'longitude': -8.616097430291504}, 'high': {'latitude': 41.151237130291506, 'longitude': -8.613399469708499}}",4.6,PRICE_LEVEL_MODERATE,1681,Casa Guedes Oliveiras,restaurant,41.149886099999996,-8.6147368,Porto
+8,ChIJqangsgtlJA0Ro6sj_WCuIN0,"{'low': {'latitude': 41.146704619708494, 'longitude': -8.616812180291502}, 'high': {'latitude': 41.14940258029149, 'longitude': -8.614114219708497}}",4.8,PRICE_LEVEL_INEXPENSIVE,981,Casa Viúva,restaurant,41.148022499999996,-8.615475199999999,Porto
+9,ChIJMTxEH-BkJA0RHKaU_xuGBNo,"{'low': {'latitude': 41.1387468197085, 'longitude': -8.617339530291503}, 'high': {'latitude': 41.1414447802915, 'longitude': -8.614641569708498}}",4.5,PRICE_LEVEL_MODERATE,3593,Bacalhau,restaurant,41.1400528,-8.6158962,Porto
+10,ChIJMZYIIVRkJA0RQ0VKG5D-Ogs,"{'low': {'latitude': 41.16138436970849, 'longitude': -8.612144480291503}, 'high': {'latitude': 41.16408233029149, 'longitude': -8.609446519708499}}",4.6,PRICE_LEVEL_INEXPENSIVE,2373,Augusto,restaurant,41.162782299999996,-8.6107885,Porto
+11,ChIJIyjxk8hlJA0Ra074qEVCG5A,"{'low': {'latitude': 41.146641019708504, 'longitude': -8.616643880291502}, 'high': {'latitude': 41.1493389802915, 'longitude': -8.613945919708497}}",4.5,PRICE_LEVEL_MODERATE,3181,Casa Guedes Progresso,restaurant,41.1479342,-8.6153164,Porto
+12,ChIJqZU2HuVkJA0RnoPeIx_GKcM,"{'low': {'latitude': 41.1466130197085, 'longitude': -8.609098730291503}, 'high': {'latitude': 41.14931098029149, 'longitude': -8.606400769708499}}",4.5,PRICE_LEVEL_MODERATE,5022,Abadia do Porto,restaurant,41.147980499999996,-8.607802,Porto
+13,ChIJ_7c3FyllJA0RCqwia6mWxr4,"{'low': {'latitude': 41.1446933197085, 'longitude': -8.605465930291501}, 'high': {'latitude': 41.1473912802915, 'longitude': -8.602767969708497}}",4.6,PRICE_LEVEL_MODERATE,7882,Casa Guedes Rooftop,restaurant,41.1459532,-8.604107400000002,Porto
+14,ChIJD-Fadx5lJA0RdSIMj_F_gdI,"{'low': {'latitude': 41.1420787197085, 'longitude': -8.619470230291501}, 'high': {'latitude': 41.14477668029149, 'longitude': -8.616772269708497}}",4.5,PRICE_LEVEL_INEXPENSIVE,3724,Taberna Santo António,restaurant,41.1434104,-8.6180922,Porto
+15,ChIJAw0pouFkJA0RPNw87OxBZ4M,"{'low': {'latitude': 41.141237369708506, 'longitude': -8.615053380291503}, 'high': {'latitude': 41.143935330291505, 'longitude': -8.612355419708498}}",4.5,PRICE_LEVEL_INEXPENSIVE,1149,Tasquinha Da Paula,restaurant,41.1425869,-8.6136998,Porto
+16,ChIJlTj_BOJkJA0RKYC2YPMDxMo,"{'low': {'latitude': 41.1429630697085, 'longitude': -8.616909780291504}, 'high': {'latitude': 41.1456610302915, 'longitude': -8.6142118197085}}",4.6,PRICE_LEVEL_MODERATE,1737,Taberna d'Avó,restaurant,41.144317799999996,-8.6155464,Porto
+17,ChIJ-aBV2eNkJA0RYhIyy5si0dE,"{'low': {'latitude': 41.1430717197085, 'longitude': -8.613632330291502}, 'high': {'latitude': 41.1457696802915, 'longitude': -8.610934369708497}}",4.8,PRICE_LEVEL_INEXPENSIVE,3725,"""VOLTARIA"" - Petisqueira Portuguesa",restaurant,41.1444161,-8.6122994,Porto
+18,ChIJ3Y6dteNkJA0R0h7Eo919-Go,"{'low': {'latitude': 41.1439855197085, 'longitude': -8.614625680291503}, 'high': {'latitude': 41.14668348029149, 'longitude': -8.611927719708499}}",4.7,PRICE_LEVEL_INEXPENSIVE,1761,Restaurante Cana Verde,restaurant,41.1452912,-8.6131642,Porto
+19,ChIJQ6BGzBxlJA0RJDqlHdnqXsY,"{'low': {'latitude': 41.146925419708495, 'longitude': -8.621122130291504}, 'high': {'latitude': 41.149623380291494, 'longitude': -8.618424169708499}}",4.7,PRICE_LEVEL_INEXPENSIVE,555,Tasquinha Zé Povinho,restaurant,41.1483044,-8.6198598,Porto
+20,ChIJb7l8S-JkJA0Ra9Sr_G49kuw,"{'low': {'latitude': 41.144208319708504, 'longitude': -8.614780530291503}, 'high': {'latitude': 41.1469062802915, 'longitude': -8.612082569708498}}",4.6,PRICE_LEVEL_INEXPENSIVE,2254,Flor de Bragança,restaurant,41.1455536,-8.6134024,Porto
+21,ChIJjaidch1lJA0RTsa-7QimUDc,"{'low': {'latitude': 41.1455630697085, 'longitude': -8.618517480291503}, 'high': {'latitude': 41.1482610302915, 'longitude': -8.615819519708499}}",4.5,PRICE_LEVEL_MODERATE,1316,Zé Bota,restaurant,41.1469215,-8.617185899999999,Porto
+22,ChIJIxSnVeJkJA0RaUwFYWHkh3U,"{'low': {'latitude': 41.14485071970851, 'longitude': -8.614881180291503}, 'high': {'latitude': 41.1475486802915, 'longitude': -8.612183219708498}}",4.7,PRICE_LEVEL_MODERATE,2172,ENCAIXADOS,restaurant,41.1462232,-8.6134836,Porto
+23,ChIJj2WnPu9kJA0RtToi37tMeqs,"{'low': {'latitude': 41.14431711970851, 'longitude': -8.604582180291503}, 'high': {'latitude': 41.14701508029151, 'longitude': -8.601884219708499}}",4.9,PRICE_LEVEL_MODERATE,1281,DAMA pé de cabra,restaurant,41.1457858,-8.6033291,Porto
+24,ChIJ4ygwOeBkJA0Rf0PqemLq8zs,"{'low': {'latitude': 41.1391427197085, 'longitude': -8.616128780291504}, 'high': {'latitude': 41.1418406802915, 'longitude': -8.6134308197085}}",4.5,PRICE_LEVEL_MODERATE,1704,A Grade,restaurant,41.1405556,-8.6149472,Porto
+25,ChIJY7D7buRkJA0RbELz8FNhrwo,"{'low': {'latitude': 41.1446260197085, 'longitude': -8.611185730291503}, 'high': {'latitude': 41.147323980291496, 'longitude': -8.608487769708498}}",4.6,PRICE_LEVEL_MODERATE,1144,O Rápido,restaurant,41.1460088,-8.609844299999999,Porto
+26,ChIJATaYniBlJA0RwKDiqR8BBMs,"{'low': {'latitude': 41.1452798197085, 'longitude': -8.618857280291504}, 'high': {'latitude': 41.1479777802915, 'longitude': -8.6161593197085}}",4.6,,294,Tasca da Cordoaria,restaurant,41.1467299,-8.6173133,Porto
+27,ChIJlRME4-9kJA0R5_N59VLD6ts,"{'low': {'latitude': 41.1481288197085, 'longitude': -8.605481880291503}, 'high': {'latitude': 41.150826780291496, 'longitude': -8.602783919708498}}",4.5,PRICE_LEVEL_MODERATE,1941,Aquele Tasco,restaurant,41.1494742,-8.6041346,Porto
+28,ChIJXRHyGvtkJA0RqI6tg9scNT8,"{'low': {'latitude': 41.149809269708506, 'longitude': -8.609793030291502}, 'high': {'latitude': 41.152507230291505, 'longitude': -8.607095069708498}}",4.5,PRICE_LEVEL_INEXPENSIVE,2582,Churrasqueira Lameiras,restaurant,41.151149499999995,-8.6084055,Porto
+29,ChIJF4Xfx-NkJA0RLTxNfgpHk0Q,"{'low': {'latitude': 41.144127619708506, 'longitude': -8.614054280291503}, 'high': {'latitude': 41.146825580291505, 'longitude': -8.611356319708499}}",4.6,PRICE_LEVEL_INEXPENSIVE,837,Novo Mundo,restaurant,41.145220699999996,-8.612636799999999,Porto
+30,ChIJa4rq8nZlJA0Re3QVSXMXgX0,"{'low': {'latitude': 41.142851369708495, 'longitude': -8.618042980291502}, 'high': {'latitude': 41.145549330291495, 'longitude': -8.615345019708498}}",4.8,PRICE_LEVEL_MODERATE,1270,The Door,restaurant,41.144196099999995,-8.616688,Porto
+31,ChIJR9mM3uFkJA0RINhvAzWXWCc,"{'low': {'latitude': 41.14106711970851, 'longitude': -8.617156580291502}, 'high': {'latitude': 41.14376508029151, 'longitude': -8.614458619708497}}",4.8,PRICE_LEVEL_MODERATE,1974,Bota&Bira,restaurant,41.1424129,-8.6158059,Porto
+32,ChIJbRk7tUA2ZkARmN8b6koD2Uk,"{'low': {'latitude': 41.1547045697085, 'longitude': -8.6221345302915}, 'high': {'latitude': 41.1574025302915, 'longitude': -8.619436569708496}}",4.6,PRICE_LEVEL_INEXPENSIVE,845,Restaurante Universal Porto,restaurant,41.1560433,-8.620735999999999,Porto
+33,ChIJ9__9A85lJA0RLdnMcYhOFho,"{'low': {'latitude': 41.140481619708495, 'longitude': -8.610004980291501}, 'high': {'latitude': 41.143179580291495, 'longitude': -8.607307019708497}}",4.5,PRICE_LEVEL_INEXPENSIVE,732,A Tasquinha Dos Guindais,restaurant,41.14164780000001,-8.6087222,Porto
+34,ChIJbYDjeW1lJA0RAR3aiwGG2Lg,"{'low': {'latitude': 41.1447140697085, 'longitude': -8.605146280291503}, 'high': {'latitude': 41.1474120302915, 'longitude': -8.602448319708499}}",4.5,PRICE_LEVEL_MODERATE,386,Caralhau,restaurant,41.146028,-8.6038037,Porto
+35,ChIJyRYfrwJlJA0RKQQP_muW1_c,"{'low': {'latitude': 41.147910519708496, 'longitude': -8.618072330291502}, 'high': {'latitude': 41.150608480291496, 'longitude': -8.615374369708498}}",4.6,PRICE_LEVEL_MODERATE,1066,Adega Do Carregal,restaurant,41.149223899999996,-8.6167183,Porto
+36,ChIJrW4kIPdkJA0RtoVTs5RG6QU,"{'low': {'latitude': 41.1543995697085, 'longitude': -8.603737480291501}, 'high': {'latitude': 41.1570975302915, 'longitude': -8.601039519708497}}",4.5,PRICE_LEVEL_EXPENSIVE,1150,Portucale,restaurant,41.1557183,-8.602244899999999,Porto
+37,ChIJKQZ_BO9kJA0RjzzxAsmQ9gc,"{'low': {'latitude': 41.1455498697085, 'longitude': -8.603644630291502}, 'high': {'latitude': 41.1482478302915, 'longitude': -8.600946669708497}}",4.5,PRICE_LEVEL_INEXPENSIVE,1094,Restaurante Roma,restaurant,41.1468619,-8.6022751,Porto
+38,ChIJRzJJz15lJA0Rbpex59T1v08,"{'low': {'latitude': 41.144864169708505, 'longitude': -8.604144880291503}, 'high': {'latitude': 41.1475621302915, 'longitude': -8.601446919708499}}",4.5,PRICE_LEVEL_INEXPENSIVE,142,Tasquinha D’Ouro II,restaurant,41.1462441,-8.6028102,Porto
+39,ChIJIzO-_TVlJA0RCXfoSOeavNQ,"{'low': {'latitude': 41.154120919708504, 'longitude': -8.630674530291504}, 'high': {'latitude': 41.156818880291496, 'longitude': -8.6279765697085}}",4.9,,11,O Retiro do Bom Sucesso,restaurant,41.1555241,-8.6292621,Porto
+40,ChIJQVhODf1kJA0RRBCINyLAJog,"{'low': {'latitude': 41.1490493697085, 'longitude': -8.616133380291501}, 'high': {'latitude': 41.1517473302915, 'longitude': -8.613435419708496}}",4.7,PRICE_LEVEL_INEXPENSIVE,667,Restaurante a Taska,restaurant,41.1503404,-8.6148109,Porto
+41,ChIJFTqGsuJkJA0RJF5gry9lrlw,"{'low': {'latitude': 41.1473803197085, 'longitude': -8.616724380291503}, 'high': {'latitude': 41.1500782802915, 'longitude': -8.614026419708498}}",4.6,PRICE_LEVEL_INEXPENSIVE,1408,Casa Expresso,restaurant,41.1487051,-8.615372299999999,Porto
+42,ChIJR9m2aZFkJA0RQ98iyZnDCvE,"{'low': {'latitude': 41.145963619708496, 'longitude': -8.588977430291502}, 'high': {'latitude': 41.14866158029149, 'longitude': -8.586279469708499}}",4.6,PRICE_LEVEL_MODERATE,598,Restaurante Campo Alegre /Compadre,restaurant,41.1473259,-8.587596099999999,Porto
+43,ChIJpSSJyKBlJA0RUVkAfPU-_ZI,"{'low': {'latitude': 41.1576098197085, 'longitude': -8.6345342802915}, 'high': {'latitude': 41.1603077802915, 'longitude': -8.631836319708498}}",4.5,PRICE_LEVEL_INEXPENSIVE,652,Rosa do Porto,restaurant,41.158956499999995,-8.633228599999999,Porto
+44,ChIJncrmv_xkJA0RnFNP47o4J8U,"{'low': {'latitude': 41.1489849197085, 'longitude': -8.613270680291503}, 'high': {'latitude': 41.151682880291496, 'longitude': -8.610572719708498}}",4.5,PRICE_LEVEL_INEXPENSIVE,3570,Almada Café,restaurant,41.150375,-8.6118472,Porto
+45,ChIJv3NBtV9kJA0R_pkhKFvvGAY,"{'low': {'latitude': 41.1616414197085, 'longitude': -8.596310730291501}, 'high': {'latitude': 41.164339380291494, 'longitude': -8.593612769708498}}",4.5,PRICE_LEVEL_EXPENSIVE,543,Líder,restaurant,41.1629752,-8.5948832,Porto
+46,ChIJ9WmEvBFlJA0RkItbkyMN6_M,"{'low': {'latitude': 41.144636519708506, 'longitude': -8.632205580291503}, 'high': {'latitude': 41.1473344802915, 'longitude': -8.629507619708498}}",4.6,PRICE_LEVEL_INEXPENSIVE,1031,O Caseirinho,restaurant,41.145984299999995,-8.6308631,Porto
+47,ChIJKwejxAllJA0R5KXISlQg5fI,"{'low': {'latitude': 41.1557325697085, 'longitude': -8.632121180291502}, 'high': {'latitude': 41.1584305302915, 'longitude': -8.629423219708498}}",4.6,PRICE_LEVEL_INEXPENSIVE,146,Cantinho dos Sabores,restaurant,41.1571193,-8.6308069,Porto
+48,ChIJo8t6de9kJA0RlNuBnEm6WUE,"{'low': {'latitude': 41.1458603697085, 'longitude': -8.6051932802915}, 'high': {'latitude': 41.14855833029149, 'longitude': -8.602495319708497}}",4.5,PRICE_LEVEL_INEXPENSIVE,1235,Murça No Porto,restaurant,41.147220499999996,-8.6038278,Porto
+49,ChIJzdxCBe9kJA0RUyayOMxHUe8,"{'low': {'latitude': 41.1448197697085, 'longitude': -8.606720880291501}, 'high': {'latitude': 41.1475177302915, 'longitude': -8.604022919708497}}",4.6,PRICE_LEVEL_INEXPENSIVE,236,Restaurante Gondarem Baixa,restaurant,41.146102,-8.6053499,Porto
+50,ChIJzWuZEQZlJA0RzkYBf748P_g,"{'low': {'latitude': 41.1511291697085, 'longitude': -8.614939830291501}, 'high': {'latitude': 41.153827130291496, 'longitude': -8.612241869708498}}",4.8,,44,Casa Vila Verde,restaurant,41.1524672,-8.6135121,Porto
+51,ChIJ1bf6lhplJA0RMvZfCb6EITU,"{'low': {'latitude': 41.143197619708495, 'longitude': -8.613540430291504}, 'high': {'latitude': 41.145895580291494, 'longitude': -8.6108424697085}}",4.5,PRICE_LEVEL_MODERATE,1038,Em Canto,restaurant,41.144569,-8.6120973,Porto
+52,ChIJKzjmOwBlJA0RR0JYO0abZiw,"{'low': {'latitude': 41.142013919708496, 'longitude': -8.614765980291503}, 'high': {'latitude': 41.144711880291496, 'longitude': -8.612068019708499}}",4.6,,252,The Portuguese Corner - Porto,restaurant,41.1434068,-8.6134726,Porto
+53,ChIJm0fehdplJA0RGR0cCiKiYSo,"{'low': {'latitude': 41.145927369708495, 'longitude': -8.603981430291501}, 'high': {'latitude': 41.148625330291495, 'longitude': -8.601283469708497}}",5.0,,6,Snack Bar Oasis,restaurant,41.147261799999995,-8.6026394,Porto
+54,ChIJh6pcjQNlJA0Rly-M4hmhQSs,"{'low': {'latitude': 41.150818469708504, 'longitude': -8.622291380291504}, 'high': {'latitude': 41.153516430291496, 'longitude': -8.6195934197085}}",4.7,PRICE_LEVEL_INEXPENSIVE,451,Vasco da Gama Restaurant,restaurant,41.152145,-8.62092,Porto
+55,ChIJR9UTu3FlJA0RQjTMCtn_H1Q,"{'low': {'latitude': 41.1468146197085, 'longitude': -8.650553680291504}, 'high': {'latitude': 41.1495125802915, 'longitude': -8.647855719708499}}",4.5,PRICE_LEVEL_INEXPENSIVE,814,Adega Rio Douro,restaurant,41.1481728,-8.6491781,Porto
+56,ChIJ_9ycPv1kJA0Rfjok_TFoc5U,"{'low': {'latitude': 41.148638119708494, 'longitude': -8.615818030291502}, 'high': {'latitude': 41.15133608029149, 'longitude': -8.613120069708497}}",4.5,PRICE_LEVEL_MODERATE,760,éLeBê Centro,restaurant,41.1499988,-8.6144695,Porto
+57,ChIJd5dAFONkJA0RhwFEx6-6TCE,"{'low': {'latitude': 41.1462710197085, 'longitude': -8.6135659802915}, 'high': {'latitude': 41.1489689802915, 'longitude': -8.610868019708496}}",4.5,PRICE_LEVEL_MODERATE,2814,tascö,restaurant,41.147629099999996,-8.6122022,Porto
+58,ChIJo2-WeYtlJA0R3w1HIP1Uh58,"{'low': {'latitude': 41.152726869708495, 'longitude': -8.6199367802915}, 'high': {'latitude': 41.155424830291494, 'longitude': -8.617238819708495}}",4.8,PRICE_LEVEL_MODERATE,445,Restaurante Maria Inês,restaurant,41.1540922,-8.618504699999999,Porto
+59,ChIJ7fKginllJA0RjasYk9Et_aQ,"{'low': {'latitude': 41.1491365197085, 'longitude': -8.608253330291504}, 'high': {'latitude': 41.1518344802915, 'longitude': -8.6055553697085}}",4.6,PRICE_LEVEL_MODERATE,2436,Bulha Sá da Bandeira,restaurant,41.1504694,-8.6068494,Porto
