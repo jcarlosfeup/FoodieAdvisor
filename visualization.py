@@ -2,6 +2,7 @@ import streamlit
 import folium
 from storage import ReadWriterCSVHandler, FILENAME, BUCKET_NAME
 from streamlit_folium import st_folium
+from input import get_cities_df
 
 
 def create_marker_icon(path: str):
@@ -9,16 +10,22 @@ def create_marker_icon(path: str):
                              icon_size=(30, 30))
 
 
+def create_selectbox_list(cities: list):
+    city = streamlit.selectbox("Select a city", cities)
+
+
+
+
 if __name__ == "__main__":
     bucket_writer = ReadWriterCSVHandler(filename=FILENAME,
                                          bucket_name=BUCKET_NAME)
     bucket_writer.read_df_from_bucket()
-
     print(bucket_writer.df)
 
+    city_list = get_cities_df()['name'].unique()
+    
     streamlit.title("Foodie Advisor - Best Restaurants by location")
-    city = streamlit.selectbox("Select a city",
-                               bucket_writer.df['city'].unique())
+    city = create_selectbox_list(city_list)
     
     filtered_data = bucket_writer.df[bucket_writer.df['city'] == city]
 

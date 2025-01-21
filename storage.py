@@ -18,13 +18,15 @@ class ReadWriterCSVHandler:
         path = self.filename
         self.df.to_csv(path)
 
+    def read_local_csv(self):
+        self.df = pd.read_csv(filepath_or_buffer=self.filename)
+
     def read_df_from_bucket(self):
         bucket = self.storageClient.get_bucket(self.bucket)
         blob = bucket.blob(self.filename)
         content = blob.download_as_text()
 
         self.df = pd.read_csv(StringIO(content))
-
 
     def upload_dataframe_to_gcs(self):
         bucket = self.storageClient.bucket(self.bucket)
