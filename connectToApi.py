@@ -4,6 +4,7 @@ import pandas as pd
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
 from storage import ReadWriterCSVHandler, BUCKET_NAME, FILENAME
+from db.helper import create_db_engine, insert_into_table
 
 
 BASE_URL = "https://places.googleapis.com/v1/places:searchText"
@@ -83,6 +84,12 @@ if __name__ == "__main__":
     print(f"Number of restaurants found: {len(result)}")
 
     df = transform(data=result)
+    print(df)
+
+    engine = create_db_engine()
+    df.to_sql('restaurant',
+              con=engine,
+              if_exists='append')
 
     local_writer = ReadWriterCSVHandler(
         filename=FILENAME, bucket_name=BUCKET_NAME, df=df
