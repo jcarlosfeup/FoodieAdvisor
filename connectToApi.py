@@ -34,8 +34,9 @@ def make_api_call(token, next_page_token, search_text: str):
         "pageToken": next_page_token,
     }
 
-    response = requests.post(url=BASE_URL, headers=header, json=body).json()
-
+    response = requests.post(url=BASE_URL,
+                             headers=header,
+                             json=body).json()
     time.sleep(2)
 
     return response
@@ -68,13 +69,17 @@ def connect_and_collect(access_token):
 
 def transform(data: list) -> pd.DataFrame:
     df = pd.DataFrame(data)
-    df.rename(columns={"displayName": "name"}, inplace=True)
+    df.rename(columns={"displayName": "name", "priceLevel": "price_level", "userRatingCount": "ratings_count"},
+              inplace=True)
+
     df["name"] = df["name"].apply(lambda x: x["text"])
     df["latitude"] = df["location"].apply(lambda loc: loc.get("latitude", None))
     df["longitude"] = df["location"].apply(lambda loc: loc.get("longitude", None))
     df["city"] = "Porto"  # TODO change to dynamic code
 
-    return df.drop(columns=["location"])
+    df = df.drop(columns=["id", "location", "primaryType", "viewport"])
+
+    return df[["name", "city", "rating", "ratings_count", "price_level", "latitude", "longitude"]] 
 
 
 if __name__ == "__main__":
@@ -87,12 +92,14 @@ if __name__ == "__main__":
     print(df)
 
     engine = create_db_engine()
+    print(df.columns)
     df.to_sql('restaurant',
               con=engine,
-              if_exists='append')
+              if_exists='append',
+              index=False)
 
     local_writer = ReadWriterCSVHandler(
         filename=FILENAME, bucket_name=BUCKET_NAME, df=df
     )
     local_writer.write_df_to_csv()
-    local_writer.upload_dataframe_to_gcs()
+    #local_writer.upload_dataframe_to_gcs()

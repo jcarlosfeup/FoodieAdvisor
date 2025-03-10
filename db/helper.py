@@ -17,6 +17,20 @@ def create_table(table_name: str, schema: str):
     connection.commit()
 
 
+def drop_table(table_name: str):
+    sql_statement = f"DROP TABLE IF EXISTS {table_name}"
+    cursor.execute(sql_statement)
+    connection.commit()
+
+
+def query_table(table_name: str) -> list:
+    sql_statement = f"SELECT * FROM {table_name}"
+    cursor.execute(sql_statement)
+
+    return cursor.fetchall()
+
+
+
 def insert_into_table(table_name: str, ):
     cursor = connection.execute(f"SELECT * from {table_name}")
 
@@ -35,11 +49,14 @@ def insert_into_table(table_name: str, ):
 
 
 if __name__ == "__main__":
-    schema_stat = "(id INTEGER PRIMARY KEY, name TEXT, city TEXT, rating REAL, userRatingCount INTEGER, latitude REAL, longitude REAL, viewport TEXT)"
+    schema_stat = "(id INTEGER PRIMARY KEY, name TEXT, city TEXT, rating REAL, price_level TEXT, ratings_count INTEGER, latitude REAL, longitude REAL)"
     create_table(table_name="restaurant",
                  schema=schema_stat)
-    
-    insert_into_table(table_name="restaurant")
+
+    #drop_table(table_name="restaurant")
+
+    result = query_table(table_name="restaurant")
+    print(result)
 
 
 
