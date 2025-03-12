@@ -4,7 +4,7 @@ import pandas as pd
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
 from storage import ReadWriterCSVHandler, BUCKET_NAME, FILENAME
-from db.helper import create_db_engine, insert_into_table
+from db.helper import create_db_engine
 
 
 BASE_URL = "https://places.googleapis.com/v1/places:searchText"

@@ -3,9 +3,6 @@ from io import StringIO
 import pandas as pd
 
 
-BUCKET_NAME="foodie-advisor-prod-eu"
-FILENAME="restaurants.csv"
-
 class ReadWriterCSVHandler:
 
     def __init__(self, filename, bucket_name=None, df=None):
@@ -32,12 +29,3 @@ class ReadWriterCSVHandler:
         bucket = self.storageClient.bucket(self.bucket)
         blob = bucket.blob(self.filename)
         blob.upload_from_filename(self.filename)
-
-
-if __name__ == "__main__":
-    bucket_writer = ReadWriterCSVHandler(filename=FILENAME,
-                                         bucket_name=BUCKET_NAME)
-    #bucket_writer.upload_dataframe_to_gcs()
-    bucket_writer.read_df_from_bucket()
-
-    print(bucket_writer.df)
