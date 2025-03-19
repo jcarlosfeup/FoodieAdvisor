@@ -35,6 +35,7 @@ def create_selectbox_list(cities: list):
                                options=cities,
                                index=None,
                                placeholder="Select city")
+    print(f"City is {city}")
     return city
 
 

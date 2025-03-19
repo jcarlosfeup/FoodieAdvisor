@@ -30,32 +30,41 @@ def query_table(table_name: str) -> list:
     return cursor.fetchall()
 
 
-
-def insert_into_table(table_name: str, ):
-    cursor = connection.execute(f"SELECT * from {table_name}")
-
-    cols_names = [description[0] for description in cursor.description]
-    num_cols = len(cols_names)
-    cols_names = ', '.join(cols_names)
-
-    fillers = ["?" for i in range(num_cols)]
-    fillers = ', '.join(fillers)
-
-    sql_statement = f"INSERT INTO {table_name} ({cols_names}) VALUES ({fillers})", ('John Doe', 'Software Engineer', 80000)
-    print(sql_statement)
-
+def is_city_fetched(city_name: str):
+    sql_statement = f"SELECT * FROM city WHERE name = {city_name}"
     cursor.execute(sql_statement)
+
+    return len(cursor.fetchall()) == 0
+
+
+def add_city_to_db(name: str):
+    cursor.execute(f"INSERT INTO city (name) VALUES ('{name}')")
     connection.commit()
 
 
+def fetch_city_restaurants(city_name: str):
+    sql_statement = f"SELECT * FROM restaurant WHERE city = {city_name}"
+    cursor.execute(sql_statement)
+
+    return cursor.fetchall()
+
+
 if __name__ == "__main__":
-    schema_stat = "(id INTEGER PRIMARY KEY, name TEXT, city TEXT, rating REAL, price_level TEXT, ratings_count INTEGER, latitude REAL, longitude REAL)"
+    """ schema_stat = "(id INTEGER PRIMARY KEY, name TEXT, city TEXT, rating REAL, price_level TEXT, ratings_count INTEGER, latitude REAL, longitude REAL)"
+
     create_table(table_name="restaurant",
                  schema=schema_stat)
 
-    #drop_table(table_name="restaurant")
+    #drop_table(table_name="restaurant") """
 
-    result = query_table(table_name="restaurant")
+    schema_stat = "(id INTEGER PRIMARY KEY, name TEXT)"
+
+    #create_table(table_name="city",
+    #             schema=schema_stat)
+
+    add_city_to_db(name="Porto")
+
+    result = query_table(table_name="city")
     print(result)
 
 

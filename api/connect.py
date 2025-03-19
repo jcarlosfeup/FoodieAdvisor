@@ -3,7 +3,7 @@ import time
 import pandas as pd
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
-from storage import ReadWriterCSVHandler, BUCKET_NAME, FILENAME
+from storage import ReadWriterCSVHandler
 from db.helper import create_db_engine
 
 
@@ -42,7 +42,8 @@ def make_api_call(token, next_page_token, search_text: str):
     return response
 
 
-def connect_and_collect(access_token):
+def connect_and_collect(city_name: str):
+    access_token = get_access_token(credentials)
     next_page_token = ""
     page_count = 0
     result = []
@@ -51,7 +52,8 @@ def connect_and_collect(access_token):
         response = make_api_call(
             token=access_token,
             next_page_token=next_page_token,
-            search_text="Portuguese traditional food in Porto, Portugal",
+            # TODO call LLM to get the type of cuisine and country 
+            search_text=f"Portuguese traditional food in {city_name}, Portugal",
         )
         #print(response)
         next_page_token = response.get("nextPageToken")
@@ -83,9 +85,7 @@ def transform(data: list) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    access_token = get_access_token(credentials)
-
-    result = connect_and_collect(access_token)
+    result = connect_and_collect()
     print(f"Number of restaurants found: {len(result)}")
 
     df = transform(data=result)
