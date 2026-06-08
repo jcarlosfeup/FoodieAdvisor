@@ -4,13 +4,25 @@ from sqlalchemy import create_engine
 
 logger = logging.getLogger(__name__)
 
-connection = sqlite3.connect('db/restaurants.db')
+DB_PATH = 'db/restaurants.db'
 
-cursor = connection.cursor()
+
+def get_db_connection():
+    """Get a new database connection for the current thread.
+    
+    Returns:
+        SQLite connection object
+    """
+    return sqlite3.connect(DB_PATH)
 
 
 def create_db_engine():
-    return create_engine('sqlite:///db/restaurants.db',
+    """Create SQLAlchemy engine for database operations.
+    
+    Returns:
+        SQLAlchemy engine instance
+    """
+    return create_engine(f'sqlite:///{DB_PATH}',
                          echo=False)
     
 
@@ -21,14 +33,20 @@ def create_table(table_name: str, schema: str):
         table_name: Name of the table to create
         schema: SQL schema definition for the table
     """
+    conn = None
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         sql_statement = f"CREATE TABLE IF NOT EXISTS {table_name} {schema}"
         cursor.execute(sql_statement)
-        connection.commit()
+        conn.commit()
         logger.info(f"Table '{table_name}' created or already exists")
     except sqlite3.Error as e:
         logger.error(f"Error creating table '{table_name}': {e}")
         raise
+    finally:
+        if conn:
+            conn.close()
 
 
 def drop_table(table_name: str):
@@ -37,14 +55,20 @@ def drop_table(table_name: str):
     Args:
         table_name: Name of the table to drop
     """
+    conn = None
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         sql_statement = f"DROP TABLE IF EXISTS {table_name}"
         cursor.execute(sql_statement)
-        connection.commit()
+        conn.commit()
         logger.info(f"Table '{table_name}' dropped")
     except sqlite3.Error as e:
         logger.error(f"Error dropping table '{table_name}': {e}")
         raise
+    finally:
+        if conn:
+            conn.close()
 
 
 def query_table(table_name: str) -> list:
@@ -56,7 +80,10 @@ def query_table(table_name: str) -> list:
     Returns:
         List of all records in the table
     """
+    conn = None
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         sql_statement = f"SELECT * FROM {table_name}"
         cursor.execute(sql_statement)
         results = cursor.fetchall()
@@ -65,6 +92,9 @@ def query_table(table_name: str) -> list:
     except sqlite3.Error as e:
         logger.error(f"Error querying table '{table_name}': {e}")
         raise
+    finally:
+        if conn:
+            conn.close()
 
 
 def is_city_fetched(city_name: str):
@@ -76,7 +106,10 @@ def is_city_fetched(city_name: str):
     Returns:
         True if the city exists in the database, False otherwise
     """
+    conn = None
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         sql_statement = "SELECT * FROM city WHERE name = ?"
         cursor.execute(sql_statement, (city_name,))
         result = len(cursor.fetchall()) > 0
@@ -85,6 +118,9 @@ def is_city_fetched(city_name: str):
     except sqlite3.Error as e:
         logger.error(f"Error checking if city '{city_name}' is fetched: {e}")
         raise
+    finally:
+        if conn:
+            conn.close()
 
 
 def add_city_to_db(name: str):
@@ -93,16 +129,22 @@ def add_city_to_db(name: str):
     Args:
         name: Name of the city to add
     """
+    conn = None
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         sql_statement = "INSERT INTO city (name) VALUES (?)"
         cursor.execute(sql_statement, (name,))
-        connection.commit()
+        conn.commit()
         logger.info(f"City '{name}' added to database")
     except sqlite3.IntegrityError as e:
         logger.warning(f"City '{name}' already exists in database: {e}")
     except sqlite3.Error as e:
         logger.error(f"Error adding city '{name}' to database: {e}")
         raise
+    finally:
+        if conn:
+            conn.close()
 
 
 def fetch_city_restaurants(city_name: str):
@@ -114,7 +156,10 @@ def fetch_city_restaurants(city_name: str):
     Returns:
         List of restaurant records for the city
     """
+    conn = None
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         sql_statement = "SELECT * FROM restaurant WHERE city = ?"
         cursor.execute(sql_statement, (city_name,))
         results = cursor.fetchall()
@@ -123,6 +168,9 @@ def fetch_city_restaurants(city_name: str):
     except sqlite3.Error as e:
         logger.error(f"Error fetching restaurants for city '{city_name}': {e}")
         raise
+    finally:
+        if conn:
+            conn.close()
 
 
 if __name__ == "__main__":

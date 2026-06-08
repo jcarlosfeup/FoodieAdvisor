@@ -5,7 +5,6 @@ from api.connect import connect_and_collect
 from view.visualization import add_background_image, create_headings, create_selectbox_list
 
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
