@@ -1,11 +1,14 @@
 import requests
 import time
+import logging
 import pandas as pd
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
 from storage import ReadWriterCSVHandler
 from db.helper import create_db_engine
 
+
+logger = logging.getLogger(__name__)
 
 BASE_URL = "https://places.googleapis.com/v1/places:searchText"
 SERVICE_ACCOUNT_FILE = "foodie-advisor-819220732215.json"
@@ -16,57 +19,98 @@ credentials = service_account.Credentials.from_service_account_file(
 
 
 def get_access_token(credentials):
-    credentials.refresh(Request())
-    return credentials.token
+    """Get access token from Google credentials.
+    
+    Args:
+        credentials: Google service account credentials
+        
+    Returns:
+        Access token string
+    """
+    try:
+        credentials.refresh(Request())
+        logger.debug("Access token refreshed successfully")
+        return credentials.token
+    except Exception as e:
+        logger.error(f"Error refreshing access token: {e}")
+        raise
 
 
 def make_api_call(token, next_page_token, search_text: str):
-    header = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-        "X-Goog-FieldMask": "places.displayName,places.id,places.primaryType,places.rating,places.userRatingCount,places.priceLevel,places.location,places.viewport,nextPageToken",
-    }
+    """Make an API call to Google Places API.
+    
+    Args:
+        token: Authorization token
+        next_page_token: Token for pagination
+        search_text: Search query text
+        
+    Returns:
+        JSON response from API
+    """
+    try:
+        header = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "X-Goog-FieldMask": "places.displayName,places.id,places.primaryType,places.rating,places.userRatingCount,places.priceLevel,places.location,places.viewport,nextPageToken",
+        }
 
-    body = {
-        "textQuery": search_text,
-        "includedType": "restaurant",
-        "minRating": 4.3,
-        "pageToken": next_page_token,
-    }
+        body = {
+            "textQuery": search_text,
+            "includedType": "restaurant",
+            "minRating": 4.3,
+            "pageToken": next_page_token,
+        }
 
-    response = requests.post(url=BASE_URL,
-                             headers=header,
-                             json=body).json()
-    time.sleep(2)
-
-    return response
+        response = requests.post(url=BASE_URL,
+                                 headers=header,
+                                 json=body)
+        response.raise_for_status()  # Raise exception for bad status codes
+        time.sleep(2)
+        logger.debug(f"API call successful for search: {search_text}")
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"API request failed for search '{search_text}': {e}")
+        raise
 
 
 def connect_and_collect(city_name: str):
-    access_token = get_access_token(credentials)
-    next_page_token = ""
-    page_count = 0
-    result = []
+    """Collect restaurant data from Google Places API for a city.
+    
+    Args:
+        city_name: Name of the city to search
+        
+    Returns:
+        List of restaurant data
+    """
+    try:
+        access_token = get_access_token(credentials)
+        next_page_token = ""
+        page_count = 0
+        result = []
 
-    while True:
-        response = make_api_call(
-            token=access_token,
-            next_page_token=next_page_token,
-            # TODO call LLM to get the type of cuisine and country 
-            search_text=f"Portuguese traditional food in {city_name}, Portugal",
-        )
-        #print(response)
-        next_page_token = response.get("nextPageToken")
-        result.extend(response.get("places"))
+        while True:
+            response = make_api_call(
+                token=access_token,
+                next_page_token=next_page_token,
+                # TODO call LLM to get the type of cuisine and country 
+                search_text=f"Portuguese traditional food in {city_name}, Portugal",
+            )
+            next_page_token = response.get("nextPageToken")
+            places = response.get("places", [])
+            result.extend(places)
 
-        page_count += 1
-        print(f"Page count: {page_count}")
+            page_count += 1
+            logger.info(f"Page {page_count}: Retrieved {len(places)} restaurants")
 
-        if not next_page_token:
-            print("No more pages to display")
-            break
+            if not next_page_token:
+                logger.info("All pages retrieved")
+                break
 
-    return result
+        logger.info(f"Total restaurants collected: {len(result)}")
+        return result
+    except Exception as e:
+        logger.error(f"Error collecting restaurants for city '{city_name}': {e}")
+        raise
 
 
 def transform(data: list) -> pd.DataFrame:
