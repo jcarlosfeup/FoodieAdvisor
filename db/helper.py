@@ -1,5 +1,6 @@
 import sqlite3
 import logging
+import polars as pl
 from sqlalchemy import create_engine
 
 logger = logging.getLogger(__name__)
@@ -147,14 +148,14 @@ def add_city_to_db(name: str):
             conn.close()
 
 
-def fetch_city_restaurants(city_name: str):
+def fetch_city_restaurants(city_name: str) -> pl.DataFrame:
     """Fetch all restaurants for a specific city from the database.
     
     Args:
         city_name: Name of the city
         
     Returns:
-        List of restaurant records for the city
+        Polars DataFrame containing restaurant records for the city
     """
     conn = None
     try:
@@ -163,10 +164,20 @@ def fetch_city_restaurants(city_name: str):
         sql_statement = "SELECT * FROM restaurant WHERE city = ?"
         cursor.execute(sql_statement, (city_name,))
         results = cursor.fetchall()
-        logger.debug(f"Retrieved {len(results)} restaurants for city '{city_name}'")
-        return results
+        
+        # Get column names from cursor description
+        columns = [description[0] for description in cursor.description]
+        
+        # Convert to Polars DataFrame
+        df = pl.DataFrame(results,
+                          schema=columns)
+        logger.debug(f"Retrieved {len(df)} restaurants for city '{city_name}'")
+        return df
     except sqlite3.Error as e:
         logger.error(f"Error fetching restaurants for city '{city_name}': {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Error converting restaurants to Polars DataFrame for city '{city_name}': {e}")
         raise
     finally:
         if conn:
@@ -174,25 +185,18 @@ def fetch_city_restaurants(city_name: str):
 
 
 if __name__ == "__main__":
-    """ schema_stat = "(id INTEGER PRIMARY KEY, name TEXT, city TEXT, rating REAL, price_level TEXT, ratings_count INTEGER, latitude REAL, longitude REAL)"
+    schema_stat = "(id INTEGER PRIMARY KEY, name TEXT, city TEXT, rating REAL, price_level TEXT, ratings_count INTEGER, latitude REAL, longitude REAL)"
 
     create_table(table_name="restaurant",
                  schema=schema_stat)
 
     #drop_table(table_name="restaurant") """
 
-    schema_stat = "(id INTEGER PRIMARY KEY, name TEXT)"
+    """schema_stat = "(id INTEGER PRIMARY KEY, name TEXT)"
 
-    #create_table(table_name="city",
-    #             schema=schema_stat)
+    create_table(table_name="city",
+                 schema=schema_stat)"""
 
-    add_city_to_db(name="Porto")
+    #add_city_to_db(name="Porto")
 
-    result = query_table(table_name="city")
-    print(result)
-
-
-
-    
-
-    
+    #result = query_table(table_name="city")

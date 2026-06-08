@@ -1,10 +1,9 @@
 import requests
 import time
 import logging
-import pandas as pd
+import polars as pl
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
-from storage import ReadWriterCSVHandler
 from db.helper import create_db_engine
 
 
@@ -73,21 +72,23 @@ def make_api_call(token, next_page_token, search_text: str):
         raise
 
 
-def connect_and_collect(city_name: str):
-    """Collect restaurant data from Google Places API for a city.
+def collect_restaurants_from_api(city_name: str) -> pl.DataFrame:
+    """Collect restaurant data from Google Places API, transform, and store in database.
     
     Args:
         city_name: Name of the city to search
         
     Returns:
-        List of restaurant data
+        Polars DataFrame containing transformed restaurant data
     """
+    conn = None
     try:
         access_token = get_access_token(credentials)
         next_page_token = ""
         page_count = 0
         result = []
 
+        # Collect data from API
         while True:
             response = make_api_call(
                 token=access_token,
@@ -107,43 +108,112 @@ def connect_and_collect(city_name: str):
                 break
 
         logger.info(f"Total restaurants collected: {len(result)}")
-        return result
+        
+        # Transform data
+        if result:
+            df = transform(data=result,
+                           city_name=city_name)
+            logger.info(f"Transformed {len(df)} restaurants into DataFrame")
+            
+            # Store in database
+            store_restaurants_to_db(df)
+            logger.info(f"Stored {len(df)} restaurants in database for city '{city_name}'")
+            
+            return df
+        else:
+            logger.warning(f"No restaurants found for city '{city_name}'")
+            return pl.DataFrame()
+            
     except Exception as e:
         logger.error(f"Error collecting restaurants for city '{city_name}': {e}")
         raise
 
 
-def transform(data: list) -> pd.DataFrame:
-    df = pd.DataFrame(data)
-    df.rename(columns={"displayName": "name", "priceLevel": "price_level", "userRatingCount": "ratings_count"},
-              inplace=True)
+def transform(data: list, city_name: str) -> pl.DataFrame:
+    """Transform raw API restaurant data into a structured Polars DataFrame.
+    
+    Args:
+        data: List of raw restaurant data from API
+        city_name: Name of the city for the restaurants
+        
+    Returns:
+        Polars DataFrame with transformed restaurant data
+    """
+    try:
+        if not data:
+            logger.warning("No data to transform")
+            return pl.DataFrame()
+        
+        # Extract relevant fields from nested API response
+        transformed_data = []
+        for restaurant in data:
+            try:
+                location = restaurant.get("location", {})
+                display_name = restaurant.get("displayName", {})
+                
+                transformed_data.append({
+                    "name": display_name.get("text", "Unknown"),
+                    "city": city_name,
+                    "rating": restaurant.get("rating", None),
+                    "ratings_count": restaurant.get("userRatingCount", 0),
+                    "price_level": restaurant.get("priceLevel", None),
+                    "latitude": location.get("latitude", None),
+                    "longitude": location.get("longitude", None),
+                })
+            except (KeyError, TypeError) as e:
+                logger.warning(f"Error transforming restaurant record: {e}")
+                continue
+        
+        if not transformed_data:
+            logger.warning(f"No valid restaurants transformed for city '{city_name}'")
+            return pl.DataFrame()
+        
+        df = pl.DataFrame(transformed_data)
+        logger.debug(f"Successfully transformed {len(df)} restaurants")
+        return df
+        
+    except Exception as e:
+        logger.error(f"Error transforming restaurant data for city '{city_name}': {e}")
+        raise
 
-    df["name"] = df["name"].apply(lambda x: x["text"])
-    df["latitude"] = df["location"].apply(lambda loc: loc.get("latitude", None))
-    df["longitude"] = df["location"].apply(lambda loc: loc.get("longitude", None))
-    df["city"] = "Porto"  # TODO change to dynamic code
 
-    df = df.drop(columns=["id", "location", "primaryType", "viewport"])
-
-    return df[["name", "city", "rating", "ratings_count", "price_level", "latitude", "longitude"]] 
+def store_restaurants_to_db(df: pl.DataFrame) -> None:
+    """Store transformed restaurant data into SQLite database.
+    
+    Args:
+        df: Polars DataFrame containing restaurant data
+    """
+    try:
+        if df.is_empty():
+            logger.warning("No data to store - DataFrame is empty")
+            return
+        
+        engine = create_db_engine()
+        
+        # Convert Polars to Pandas for SQLAlchemy compatibility
+        pandas_df = df.to_pandas()
+        
+        pandas_df.to_sql(
+            'restaurant',
+            con=engine,
+            if_exists='append',
+            index=False
+        )
+        logger.info(f"Successfully stored {len(pandas_df)} restaurants in database")
+        
+    except Exception as e:
+        logger.error(f"Error storing restaurants to database: {e}")
+        raise 
 
 
 if __name__ == "__main__":
-    result = connect_and_collect()
-    print(f"Number of restaurants found: {len(result)}")
-
-    df = transform(data=result)
-    print(df)
-
-    engine = create_db_engine()
-    print(df.columns)
-    df.to_sql('restaurant',
-              con=engine,
-              if_exists='append',
-              index=False)
-
-    local_writer = ReadWriterCSVHandler(
-        filename=FILENAME, bucket_name=BUCKET_NAME, df=df
-    )
-    local_writer.write_df_to_csv()
-    #local_writer.upload_dataframe_to_gcs()
+    try:
+        df = collect_restaurants_from_api(city_name="Porto")
+        if not df.is_empty():
+            print(f"Number of restaurants found and stored: {len(df)}")
+            print(f"Columns: {df.columns}")
+            print(df.head())
+        else:
+            print("No restaurants were collected and stored.")
+    except Exception as e:
+        logger.error(f"Failed to collect restaurants: {e}")

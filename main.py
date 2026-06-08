@@ -1,7 +1,7 @@
 import logging
 from storage import ReadWriterCSVHandler
 from db.helper import is_city_fetched, add_city_to_db, fetch_city_restaurants
-from api.connect import connect_and_collect
+from api.connect import collect_restaurants_from_api
 from view.visualization import add_background_image, create_headings, create_selectbox_list
 
 
@@ -53,24 +53,39 @@ if __name__ == "__main__":
         city = create_selectbox_list(city_list, default=default_index)
         logger.info(f"User selected city: {city}")
 
+        restaurants_df = None
+        
         # Check if city already is in DB
         if is_city_fetched(city_name=city):
             logger.info(f"City '{city}' found in database. Fetching restaurants...")
-            restaurants_lst = fetch_city_restaurants(city)
-            logger.info(f"Retrieved {len(restaurants_lst)} restaurants for '{city}'")
         else:
             logger.info(f"City '{city}' not in database. Calling API to fetch restaurants...")
-            result = connect_and_collect(city)
-            logger.info(f"Number of restaurants found: {len(result)}")
-            if len(result) > 0:
-                add_city_to_db(name=city)
-                logger.info(f"City '{city}' added to database")
+            try:
+                api_result = collect_restaurants_from_api(city)
+                logger.info(f"API call completed - {len(api_result)} restaurants collected and stored")
+                
+                if len(api_result) > 0:
+                    add_city_to_db(name=city)
+                    logger.info(f"City '{city}' added to database")
+                else:
+                    logger.warning(f"No restaurants found for '{city}' from API")
+            except Exception as e:
+                logger.error(f"Failed to collect restaurants from API for '{city}': {e}")
+        
+        # Fetch restaurants from database (single invocation)
+        try:
+            restaurants_df = fetch_city_restaurants(city)
+            if not restaurants_df.is_empty():
+                logger.info(f"Retrieved {len(restaurants_df)} restaurants for '{city}' as Polars DataFrame")
             else:
-                logger.warning(f"No restaurants found for '{city}'")
+                logger.warning(f"No restaurants found in database for '{city}'")
+        except Exception as e:
+            logger.error(f"Failed to fetch restaurants for '{city}': {e}")
+            restaurants_df = None
 
-        # TODO transform query result in dataframe
-        # filtered_data = bucket_writer.df[bucket_writer.df['city'] == city]
-        # displayMapWithMarkers(filtered_data)
+        # TODO transform query result and display on map
+        # if restaurants_df is not None and not restaurants_df.is_empty():
+        #     displayMapWithMarkers(restaurants_df)
         
     except Exception as e:
         logger.error(f"An error occurred in main execution: {e}", exc_info=True)
