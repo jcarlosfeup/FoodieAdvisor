@@ -30,12 +30,20 @@ def create_headings():
     streamlit.title("Foodie Advisor")
     streamlit.markdown("#### Best local cuisine according with your location")
 
-def create_selectbox_list(cities: list):
+def create_selectbox_list(cities: list, default: int = None):
+    """Create a selectbox for city selection.
+    
+    Args:
+        cities: List of city names to display
+        default: Index of the default city to select (optional)
+        
+    Returns:
+        Selected city name or None
+    """
     city = streamlit.selectbox(label="Where you at?",
                                options=cities,
-                               index=None,
+                               index=default,
                                placeholder="Select city")
-    print(f"City is {city}")
     return city
 
 
