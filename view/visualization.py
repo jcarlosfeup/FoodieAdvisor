@@ -17,51 +17,52 @@ def add_background_image(path: str):
     }
     </style>
     """ % encoded_image
-    streamlit.markdown(html_template,
-                       unsafe_allow_html=True)
+    streamlit.markdown(html_template, unsafe_allow_html=True)
 
 
 def create_marker_icon(path: str):
-    return folium.CustomIcon(icon_image=path,
-                             icon_size=(30, 30))
+    return folium.CustomIcon(icon_image=path, icon_size=(30, 30))
 
 
 def create_headings():
     streamlit.title("Foodie Advisor")
     streamlit.markdown("#### Best local cuisine according with your location")
 
+
 def create_selectbox_list(cities: list, default: int = None):
     """Create a selectbox for city selection.
-    
+
     Args:
         cities: List of city names to display
         default: Index of the default city to select (optional)
-        
+
     Returns:
         Selected city name or None
     """
-    city = streamlit.selectbox(label="Where you at?",
-                               options=cities,
-                               index=default,
-                               placeholder="Select city")
+    city = streamlit.selectbox(
+        label="Where you at?", options=cities, index=default, placeholder="Select city"
+    )
     return city
 
 
 def displayMapWithMarkers(filtered_df):
-    if len(filtered_df.index) > 0:
-        mapa = folium.Map(location=[filtered_df["latitude"].mean(), filtered_df["longitude"].mean()],
-                        zoom_start=13)
+    if filtered_df is not None and not filtered_df.is_empty():
+        latitude_mean = filtered_df["latitude"].mean()
+        longitude_mean = filtered_df["longitude"].mean()
 
-        for _, row in filtered_df.iterrows():
+        mapa = folium.Map(
+            location=[latitude_mean, longitude_mean],
+            zoom_start=13,
+        )
+
+        for row in filtered_df.iter_rows(named=True):
             folium.Marker(
-                location=[row['latitude'], row['longitude']],
+                location=[row["latitude"], row["longitude"]],
                 popup=f"{row['name']} (Rating: {row['rating']})",
                 tooltip=row["name"],
-                icon=create_marker_icon(path="assets/images/icon.png")
+                icon=create_marker_icon(path="assets/images/icon.png"),
             ).add_to(mapa)
 
-        st_folium(mapa,
-                width=700,
-                height=500)
+        st_folium(mapa, width=700, height=500)
     else:
         streamlit.subheader("No results founds in this city!")
