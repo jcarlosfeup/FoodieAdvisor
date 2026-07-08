@@ -72,11 +72,12 @@ def make_api_call(token, next_page_token, search_text: str):
         raise
 
 
-def collect_restaurants_from_api(city_name: str) -> pl.DataFrame:
+def collect_restaurants_from_api(city_name: str, country_name: str | None = None) -> pl.DataFrame:
     """Collect restaurant data from Google Places API, transform, and store in database.
     
     Args:
         city_name: Name of the city to search
+        country_name: Optional country name to improve the search location
         
     Returns:
         Polars DataFrame containing transformed restaurant data
@@ -88,13 +89,15 @@ def collect_restaurants_from_api(city_name: str) -> pl.DataFrame:
         page_count = 0
         result = []
 
+        location = city_name if not country_name else f"{city_name}, {country_name}"
+        logger.info(f"Searching restaurants for location: {location}")
+
         # Collect data from API
         while True:
             response = make_api_call(
                 token=access_token,
                 next_page_token=next_page_token,
-                # TODO call LLM to get the type of cuisine and country 
-                search_text=f"Portuguese traditional food in {city_name}, Portugal",
+                search_text=f"traditionalrestaurants in {location}",
             )
             next_page_token = response.get("nextPageToken")
             places = response.get("places", [])

@@ -45,14 +45,13 @@ def create_selectbox_list(cities: list, default: int = None):
     return city
 
 
-def displayMapWithMarkers(filtered_df, city_name: str = None):
+def displayMapWithMarkers(filtered_df, city_name: str = None, city_coordinates: tuple | None = None):
     if filtered_df is not None and not filtered_df.is_empty():
-        latitude_mean = filtered_df["latitude"].mean()
-        longitude_mean = filtered_df["longitude"].mean()
+        latitude, longitude = city_coordinates
 
         mapa = folium.Map(
-            location=[latitude_mean, longitude_mean],
-            zoom_start=13,
+            location=[latitude, longitude],
+            zoom_start=12,
         )
 
         for row in filtered_df.iter_rows(named=True):

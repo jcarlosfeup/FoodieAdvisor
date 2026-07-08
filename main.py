@@ -27,7 +27,11 @@ def ensure_restaurants_for_city(city_name: str, city_metadata: dict | None = Non
     logger.info(f"No restaurants found for '{city_name}' in the database. Trying the API.")
 
     try:
-        api_result = collect_restaurants_from_api(city_name)
+        country_name = city_metadata.get("country") if city_metadata else None
+        api_result = collect_restaurants_from_api(
+            city_name,
+            country_name=country_name,
+        )
         if len(api_result) > 0:
             if not city_exists:
                 add_city_to_db(
@@ -118,7 +122,18 @@ if __name__ == "__main__":
 
         # TODO transform query result and display on map
         if restaurants_df is not None and not restaurants_df.is_empty():
-            displayMapWithMarkers(restaurants_df, city_name=city)
+            city_coordinates = None
+            if city_metadata:
+                city_coordinates = (
+                    city_metadata.get("latitude"),
+                    city_metadata.get("longitude"),
+                )
+
+            displayMapWithMarkers(
+                restaurants_df,
+                city_name=city,
+                city_coordinates=city_coordinates,
+            )
 
     except Exception as e:
         logger.error(f"An error occurred in main execution: {e}", exc_info=True)
