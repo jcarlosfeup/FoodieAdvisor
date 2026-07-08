@@ -4,7 +4,7 @@ import logging
 import polars as pl
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
-from db.helper import create_db_engine
+from db.helper import get_db_connection
 
 
 logger = logging.getLogger(__name__)
@@ -183,27 +183,30 @@ def store_restaurants_to_db(df: pl.DataFrame) -> None:
     Args:
         df: Polars DataFrame containing restaurant data
     """
+    conn = None
     try:
         if df.is_empty():
             logger.warning("No data to store - DataFrame is empty")
             return
-        
-        engine = create_db_engine()
-        
-        # Convert Polars to Pandas for SQLAlchemy compatibility
-        pandas_df = df.to_pandas()
-        
-        pandas_df.to_sql(
-            'restaurant',
-            con=engine,
-            if_exists='append',
-            index=False
-        )
-        logger.info(f"Successfully stored {len(pandas_df)} restaurants in database")
-        
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        columns = df.columns
+        placeholders = ", ".join("?" for _ in columns)
+        column_names = ", ".join(columns)
+        sql_statement = f"INSERT INTO restaurant ({column_names}) VALUES ({placeholders})"
+
+        rows = list(df.iter_rows())
+        cursor.executemany(sql_statement, rows)
+        conn.commit()
+        logger.info(f"Successfully stored {len(rows)} restaurants in database")
+
     except Exception as e:
         logger.error(f"Error storing restaurants to database: {e}")
-        raise 
+        raise
+    finally:
+        if conn:
+            conn.close()
 
 
 if __name__ == "__main__":

@@ -124,18 +124,36 @@ def is_city_fetched(city_name: str):
             conn.close()
 
 
-def add_city_to_db(name: str):
-    """Add a city to the database.
+def add_city_to_db(
+    name: str,
+    country: str | None = None,
+    latitude: float | None = None,
+    longitude: float | None = None,
+    iso: str | None = None,
+    population: int | None = None,
+):
+    """Add a city to the database with available metadata fields.
     
     Args:
         name: Name of the city to add
+        country: Country name for the city
+        latitude: Latitude of the city
+        longitude: Longitude of the city
+        iso: ISO code for the country
+        population: Population of the city
     """
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        sql_statement = "INSERT INTO city (name) VALUES (?)"
-        cursor.execute(sql_statement, (name,))
+        sql_statement = (
+            "INSERT INTO city (name, country, latitude, longitude, iso, population) "
+            "VALUES (?, ?, ?, ?, ?, ?)"
+        )
+        cursor.execute(
+            sql_statement,
+            (name, country, latitude, longitude, iso, population),
+        )
         conn.commit()
         logger.info(f"City '{name}' added to database")
     except sqlite3.IntegrityError as e:
@@ -185,6 +203,30 @@ def fetch_city_restaurants(city_name: str) -> pl.DataFrame:
 
 
 if __name__ == "__main__":
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        statements = [
+            "DELETE FROM restaurant;"
+        ]
+
+        for stmt in statements:
+            try:
+                cursor.execute(stmt)
+                logger.info(f"Executed: {stmt}")
+            except sqlite3.OperationalError as e:
+                logger.warning(f"Skipping ALTER TABLE statement because it already exists or failed: {e}")
+
+        conn.commit()
+    except sqlite3.Error as e:
+        logger.error(f"Error applying ALTER TABLE statements: {e}")
+        raise
+    finally:
+        if conn:
+            conn.close()
+    '''
     schema_stat = "(id INTEGER PRIMARY KEY, name TEXT, city TEXT, rating REAL, price_level TEXT, ratings_count INTEGER, latitude REAL, longitude REAL)"
 
     create_table(table_name="restaurant",
@@ -199,4 +241,4 @@ if __name__ == "__main__":
 
     #add_city_to_db(name="Porto")
 
-    #result = query_table(table_name="city")
+    #result = query_table(table_name="city")'''

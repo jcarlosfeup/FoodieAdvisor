@@ -16,7 +16,7 @@ FILENAME = "world_cities.csv"
 DEFAULT_CITY = "Porto"
 
 
-def ensure_restaurants_for_city(city_name: str):
+def ensure_restaurants_for_city(city_name: str, city_metadata: dict | None = None):
     """Return restaurants for a city, fetching them from the API when none are stored."""
     city_exists = is_city_fetched(city_name=city_name)
     restaurants_df = fetch_city_restaurants(city_name)
@@ -30,7 +30,14 @@ def ensure_restaurants_for_city(city_name: str):
         api_result = collect_restaurants_from_api(city_name)
         if len(api_result) > 0:
             if not city_exists:
-                add_city_to_db(name=city_name)
+                add_city_to_db(
+                    name=city_name,
+                    country=city_metadata.get("country") if city_metadata else None,
+                    latitude=city_metadata.get("latitude") if city_metadata else None,
+                    longitude=city_metadata.get("longitude") if city_metadata else None,
+                    iso=city_metadata.get("iso") if city_metadata else None,
+                    population=city_metadata.get("population") if city_metadata else None,
+                )
                 logger.info(f"City '{city_name}' added to database")
             return fetch_city_restaurants(city_name)
 
@@ -62,7 +69,8 @@ if __name__ == "__main__":
         add_background_image(path="assets/images/background.jpg")
         logger.info("Background image loaded successfully")
 
-        city_list = get_cities_df()['name'].unique()
+        cities_df = get_cities_df()
+        city_list = cities_df['city'].unique() if 'city' in cities_df.columns else cities_df['name'].unique()
         logger.debug(f"Total cities available: {len(city_list)}")
 
         create_headings()
@@ -79,9 +87,27 @@ if __name__ == "__main__":
         logger.info(f"User selected city: {city}")
 
         restaurants_df = None
+        city_metadata = {}
+
+        if isinstance(cities_df, object):
+            try:
+                city_row = cities_df[cities_df['city'] == city]
+
+                if not city_row.empty:
+                    row = city_row.iloc[0]
+                    city_metadata = {
+                        "country": row.get('country') if hasattr(row, 'get') else None,
+                        "latitude": row.get('latitude') if hasattr(row, 'get') else None,
+                        "longitude": row.get('longitude') if hasattr(row, 'get') else None,
+                        "iso": row.get('iso') if hasattr(row, 'get') else None,
+                        "population": row.get('population') if hasattr(row, 'get') else None,
+                    }
+            except Exception as e:
+                logger.warning(f"Could not resolve metadata for city '{city}': {e}")
 
         try:
-            restaurants_df = ensure_restaurants_for_city(city)
+            restaurants_df = ensure_restaurants_for_city(city,
+                                                         city_metadata=city_metadata)
             if not restaurants_df.is_empty():
                 logger.info(f"Retrieved {len(restaurants_df)} restaurants for '{city}' as Polars DataFrame")
             else:
@@ -92,7 +118,7 @@ if __name__ == "__main__":
 
         # TODO transform query result and display on map
         if restaurants_df is not None and not restaurants_df.is_empty():
-            displayMapWithMarkers(restaurants_df)
+            displayMapWithMarkers(restaurants_df, city_name=city)
 
     except Exception as e:
         logger.error(f"An error occurred in main execution: {e}", exc_info=True)

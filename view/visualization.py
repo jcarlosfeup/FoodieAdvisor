@@ -45,7 +45,7 @@ def create_selectbox_list(cities: list, default: int = None):
     return city
 
 
-def displayMapWithMarkers(filtered_df):
+def displayMapWithMarkers(filtered_df, city_name: str = None):
     if filtered_df is not None and not filtered_df.is_empty():
         latitude_mean = filtered_df["latitude"].mean()
         longitude_mean = filtered_df["longitude"].mean()
@@ -63,6 +63,7 @@ def displayMapWithMarkers(filtered_df):
                 icon=create_marker_icon(path="assets/images/icon.png"),
             ).add_to(mapa)
 
-        st_folium(mapa, width=700, height=500)
+        map_key = f"restaurant-map-{city_name or 'default'}"
+        st_folium(mapa, width=700, height=500, key=map_key)
     else:
         streamlit.subheader("No results founds in this city!")
