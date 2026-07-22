@@ -11,6 +11,12 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://places.googleapis.com/v1/places:searchText"
 SERVICE_ACCOUNT_FILE = "foodie-advisor-819220732215.json"
+REQUEST_TIMEOUT_SECONDS = 30
+PAGINATION_DELAY_SECONDS = 2
+FIELD_MASK = (
+    "places.displayName,places.rating,places.userRatingCount,"
+    "places.priceLevel,places.location,nextPageToken"
+)
 
 credentials = service_account.Credentials.from_service_account_file(
     SERVICE_ACCOUNT_FILE, scopes=["https://www.googleapis.com/auth/cloud-platform"]
@@ -27,6 +33,9 @@ def get_access_token(credentials):
         Access token string
     """
     try:
+        if credentials.valid and credentials.token:
+            return credentials.token
+
         credentials.refresh(Request())
         logger.debug("Access token refreshed successfully")
         return credentials.token
@@ -35,7 +44,7 @@ def get_access_token(credentials):
         raise
 
 
-def make_api_call(token, next_page_token, search_text: str):
+def make_api_call(session, token, next_page_token, search_text: str):
     """Make an API call to Google Places API.
     
     Args:
@@ -50,7 +59,7 @@ def make_api_call(token, next_page_token, search_text: str):
         header = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
-            "X-Goog-FieldMask": "places.displayName,places.id,places.primaryType,places.rating,places.userRatingCount,places.priceLevel,places.location,places.viewport,nextPageToken",
+            "X-Goog-FieldMask": FIELD_MASK,
         }
 
         body = {
@@ -60,11 +69,13 @@ def make_api_call(token, next_page_token, search_text: str):
             "pageToken": next_page_token,
         }
 
-        response = requests.post(url=BASE_URL,
-                                 headers=header,
-                                 json=body)
+        response = session.post(
+            url=BASE_URL,
+            headers=header,
+            json=body,
+            timeout=REQUEST_TIMEOUT_SECONDS,
+        )
         response.raise_for_status()  # Raise exception for bad status codes
-        time.sleep(2)
         logger.debug(f"API call successful for search: {search_text}")
         return response.json()
     except requests.exceptions.RequestException as e:
@@ -84,31 +95,37 @@ def collect_restaurants_from_api(city_name: str, country_name: str | None = None
     """
     conn = None
     try:
+        location = city_name if not country_name else f"{city_name}, {country_name}"
+        cuisine = f"{country_name} traditional" if country_name else "local"
+        search_text = f"{cuisine} restaurants in {location}"
+        logger.info(f"Searching restaurants for location: {location}")
+
         access_token = get_access_token(credentials)
         next_page_token = ""
         page_count = 0
         result = []
 
-        location = city_name if not country_name else f"{city_name}, {country_name}"
-        logger.info(f"Searching restaurants for location: {location}")
+        with requests.Session() as session:
+            while True:
+                response = make_api_call(
+                    session=session,
+                    token=access_token,
+                    next_page_token=next_page_token,
+                    search_text=search_text,
+                )
+                next_page_token = response.get("nextPageToken")
+                places = response.get("places", [])
+                result.extend(places)
 
-        # Collect data from API
-        while True:
-            response = make_api_call(
-                token=access_token,
-                next_page_token=next_page_token,
-                search_text=f"{country_name} traditional restaurants in {location}",
-            )
-            next_page_token = response.get("nextPageToken")
-            places = response.get("places", [])
-            result.extend(places)
+                page_count += 1
+                logger.info(f"Page {page_count}: Retrieved {len(places)} restaurants")
 
-            page_count += 1
-            logger.info(f"Page {page_count}: Retrieved {len(places)} restaurants")
+                if not next_page_token:
+                    logger.info("All pages retrieved")
+                    break
 
-            if not next_page_token:
-                logger.info("All pages retrieved")
-                break
+                # Google requires a short delay before a next-page token is usable.
+                time.sleep(PAGINATION_DELAY_SECONDS)
 
         logger.info(f"Total restaurants collected: {len(result)}")
         
