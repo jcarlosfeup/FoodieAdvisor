@@ -186,8 +186,10 @@ def fetch_cities() -> pl.DataFrame:
         cursor.execute(sql_statement)
         results = cursor.fetchall()
         columns = [description[0] for description in cursor.description]
-        df = pl.DataFrame(results, schema=columns)
+        df = pl.DataFrame(results, schema=columns, orient="row")
         logger.debug(f"Retrieved {len(df)} cities from the database")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_city_name ON city (name)")
+        conn.commit()
         return df
     except sqlite3.Error as e:
         logger.error(f"Error fetching cities from the database: {e}")
@@ -201,15 +203,21 @@ def import_cities_from_csv(csv_path: str) -> int:
     """Import the city catalog into SQLite as a one-time migration."""
     conn = None
     try:
+        def parse_float(value: str) -> float | None:
+            return float(value) if value.strip() else None
+
+        def parse_population(value: str) -> int | None:
+            return int(float(value)) if value.strip() else None
+
         with open(csv_path, newline="", encoding="utf-8") as file:
             rows = [
                 (
                     row["city"],
                     row["country"],
-                    float(row["latitude"]),
-                    float(row["longitude"]),
+                    parse_float(row["latitude"]),
+                    parse_float(row["longitude"]),
                     row["iso"],
-                    int(row["population"]),
+                    parse_population(row["population"]),
                 )
                 for row in csv.DictReader(file)
             ]
@@ -259,7 +267,8 @@ def fetch_city_restaurants(city_name: str) -> pl.DataFrame:
         
         # Convert to Polars DataFrame
         df = pl.DataFrame(results,
-                          schema=columns)
+                  schema=columns,
+                  orient="row")
         logger.debug(f"Retrieved {len(df)} restaurants for city '{city_name}'")
         return df
     except sqlite3.Error as e:
