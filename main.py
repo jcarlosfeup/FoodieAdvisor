@@ -1,6 +1,6 @@
 import logging
-from storage import ReadWriterCSVHandler
-from db.helper import is_city_fetched, add_city_to_db, fetch_city_restaurants
+import polars as pl
+from db.helper import is_city_fetched, add_city_to_db, fetch_cities, fetch_city_restaurants
 from api.connect import collect_restaurants_from_api
 from view.visualization import add_background_image, create_headings, create_selectbox_list, displayMapWithMarkers
 
@@ -11,8 +11,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-BUCKET_NAME = "foodie-advisor-prod-eu"
-FILENAME = "world_cities.csv"
 DEFAULT_CITY = "Porto"
 
 
@@ -53,16 +51,11 @@ def ensure_restaurants_for_city(city_name: str, city_metadata: dict | None = Non
 
 
 def get_cities_df():
-    """Fetch cities dataframe from local file and upload to GCS bucket."""
+    """Fetch the city catalog from SQLite."""
     try:
-        bucket_writer = ReadWriterCSVHandler(filename=FILENAME,
-                                             bucket_name=BUCKET_NAME)
-        logger.info(f"Uploading {FILENAME} to GCS bucket '{BUCKET_NAME}'")
-        bucket_writer.upload_dataframe_to_gcs()
-        logger.info(f"Reading {FILENAME} from GCS bucket")
-        bucket_writer.read_df_from_bucket()
-        logger.info(f"Successfully loaded {len(bucket_writer.df)} cities from {FILENAME}")
-        return bucket_writer.df
+        cities_df = fetch_cities()
+        logger.info(f"Successfully loaded {len(cities_df)} cities from SQLite")
+        return cities_df
     except Exception as e:
         logger.error(f"Error loading cities dataframe: {e}")
         raise
@@ -74,7 +67,7 @@ if __name__ == "__main__":
         logger.info("Background image loaded successfully")
 
         cities_df = get_cities_df()
-        city_list = cities_df['city'].unique() if 'city' in cities_df.columns else cities_df['name'].unique()
+        city_list = cities_df["name"].to_list()
         logger.debug(f"Total cities available: {len(city_list)}")
 
         create_headings()
@@ -93,18 +86,18 @@ if __name__ == "__main__":
         restaurants_df = None
         city_metadata = {}
 
-        if isinstance(cities_df, object):
+        if cities_df is not None and not cities_df.is_empty():
             try:
-                city_row = cities_df[cities_df['city'] == city]
+                city_row = cities_df.filter(pl.col("name") == city)
 
-                if not city_row.empty:
-                    row = city_row.iloc[0]
+                if not city_row.is_empty():
+                    row = city_row.row(0, named=True)
                     city_metadata = {
-                        "country": row.get('country') if hasattr(row, 'get') else None,
-                        "latitude": row.get('latitude') if hasattr(row, 'get') else None,
-                        "longitude": row.get('longitude') if hasattr(row, 'get') else None,
-                        "iso": row.get('iso') if hasattr(row, 'get') else None,
-                        "population": row.get('population') if hasattr(row, 'get') else None,
+                        "country": row["country"],
+                        "latitude": row["latitude"],
+                        "longitude": row["longitude"],
+                        "iso": row["iso"],
+                        "population": row["population"],
                     }
             except Exception as e:
                 logger.warning(f"Could not resolve metadata for city '{city}': {e}")
@@ -120,7 +113,6 @@ if __name__ == "__main__":
             logger.error(f"Failed to ensure restaurants for '{city}': {e}")
             restaurants_df = None
 
-        # TODO transform query result and display on map
         if restaurants_df is not None and not restaurants_df.is_empty():
             city_coordinates = None
             if city_metadata:

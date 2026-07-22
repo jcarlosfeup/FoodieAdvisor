@@ -97,7 +97,7 @@ def collect_restaurants_from_api(city_name: str, country_name: str | None = None
             response = make_api_call(
                 token=access_token,
                 next_page_token=next_page_token,
-                search_text=f"traditionalrestaurants in {location}",
+                search_text=f"{country_name} traditional restaurants in {location}",
             )
             next_page_token = response.get("nextPageToken")
             places = response.get("places", [])

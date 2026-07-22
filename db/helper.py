@@ -1,5 +1,6 @@
 import sqlite3
 import logging
+import csv
 import polars as pl
 from sqlalchemy import create_engine
 
@@ -160,6 +161,76 @@ def add_city_to_db(
         logger.warning(f"City '{name}' already exists in database: {e}")
     except sqlite3.Error as e:
         logger.error(f"Error adding city '{name}' to database: {e}")
+        raise
+    finally:
+        if conn:
+            conn.close()
+
+
+def fetch_cities() -> pl.DataFrame:
+    """Fetch one metadata row per city name for the city selector."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        sql_statement = """
+            SELECT name, latitude, longitude, country, iso, population
+            FROM city
+            WHERE id IN (
+                SELECT MIN(id)
+                FROM city
+                GROUP BY name
+            )
+            ORDER BY name
+        """
+        cursor.execute(sql_statement)
+        results = cursor.fetchall()
+        columns = [description[0] for description in cursor.description]
+        df = pl.DataFrame(results, schema=columns)
+        logger.debug(f"Retrieved {len(df)} cities from the database")
+        return df
+    except sqlite3.Error as e:
+        logger.error(f"Error fetching cities from the database: {e}")
+        raise
+    finally:
+        if conn:
+            conn.close()
+
+
+def import_cities_from_csv(csv_path: str) -> int:
+    """Import the city catalog into SQLite as a one-time migration."""
+    conn = None
+    try:
+        with open(csv_path, newline="", encoding="utf-8") as file:
+            rows = [
+                (
+                    row["city"],
+                    row["country"],
+                    float(row["latitude"]),
+                    float(row["longitude"]),
+                    row["iso"],
+                    int(row["population"]),
+                )
+                for row in csv.DictReader(file)
+            ]
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM city")
+        cursor.executemany(
+            """
+            INSERT INTO city (name, country, latitude, longitude, iso, population)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            rows,
+        )
+        conn.commit()
+        logger.info(f"Imported {len(rows)} cities from '{csv_path}'")
+        return len(rows)
+    except (OSError, ValueError, KeyError, sqlite3.Error) as e:
+        if conn:
+            conn.rollback()
+        logger.error(f"Error importing cities from '{csv_path}': {e}")
         raise
     finally:
         if conn:
