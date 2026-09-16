@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-foodie_advisor}
+      POSTGRES_USER: ${POSTGRES_USER:-foodie_advisor}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-foodie_advisor_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations/001_initial.sql:/docker-entrypoint-initdb.d/001_initial.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-foodie_advisor}:${POSTGRES_PASSWORD:-foodie_advisor_dev}@postgres:5432/${POSTGRES_DB:-foodie_advisor}
+      CITIES_CSV_PATH: /app/world_cities.csv
+      RESTAURANTS_CSV_PATH: /app/restaurants.csv
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/google_credentials.json
+    ports:
+      - "${APP_PORT:-8501}:8501"
+    volumes:
+      - ./foodie-advisor-819220732215.json:/run/secrets/google_credentials.json:ro
+
+volumes:
+  postgres_data:
