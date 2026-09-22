@@ -1,6 +1,7 @@
 import logging
 import polars as pl
-from db.helper import is_city_fetched, add_city_to_db, fetch_cities, fetch_city_restaurants
+from config import settings
+from db.repositories import create_repository
 from api.connect import collect_restaurants_from_api
 from view.visualization import add_background_image, create_headings, create_selectbox_list, displayMapWithMarkers
 
@@ -12,12 +13,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 DEFAULT_CITY = "Porto"
+repository = create_repository(settings.database_url)
 
 
 def ensure_restaurants_for_city(city_name: str, city_metadata: dict | None = None):
     """Return restaurants for a city, fetching them from the API when none are stored."""
-    city_exists = is_city_fetched(city_name=city_name)
-    restaurants_df = fetch_city_restaurants(city_name)
+    city_exists = repository.city_exists(city_name)
+    restaurants_df = repository.fetch_restaurants(city_name)
 
     if not restaurants_df.is_empty():
         return restaurants_df
@@ -25,36 +27,29 @@ def ensure_restaurants_for_city(city_name: str, city_metadata: dict | None = Non
     logger.info(f"No restaurants found for '{city_name}' in the database. Trying the API.")
 
     try:
+        if not city_exists:
+            repository.add_city({"name": city_name, **(city_metadata or {})})
+            logger.info(f"City '{city_name}' added to database")
         country_name = city_metadata.get("country") if city_metadata else None
         api_result = collect_restaurants_from_api(
             city_name,
             country_name=country_name,
         )
         if len(api_result) > 0:
-            if not city_exists:
-                add_city_to_db(
-                    name=city_name,
-                    country=city_metadata.get("country") if city_metadata else None,
-                    latitude=city_metadata.get("latitude") if city_metadata else None,
-                    longitude=city_metadata.get("longitude") if city_metadata else None,
-                    iso=city_metadata.get("iso") if city_metadata else None,
-                    population=city_metadata.get("population") if city_metadata else None,
-                )
-                logger.info(f"City '{city_name}' added to database")
-            return fetch_city_restaurants(city_name)
+            return repository.fetch_restaurants(city_name)
 
         logger.warning(f"No restaurants found for '{city_name}' from the API")
     except Exception as e:
         logger.error(f"Failed to collect restaurants from the API for '{city_name}': {e}")
 
-    return fetch_city_restaurants(city_name)
+    return repository.fetch_restaurants(city_name)
 
 
 def get_cities_df():
-    """Fetch the city catalog from SQLite."""
+    """Fetch the city catalog from PostgreSQL."""
     try:
-        cities_df = fetch_cities()
-        logger.info(f"Successfully loaded {len(cities_df)} cities from SQLite")
+        cities_df = repository.fetch_cities()
+        logger.info(f"Successfully loaded {len(cities_df)} cities from PostgreSQL")
         return cities_df
     except Exception as e:
         logger.error(f"Error loading cities dataframe: {e}")
