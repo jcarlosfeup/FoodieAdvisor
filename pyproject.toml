@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "foodie-advisor"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "google-auth>=2.0",
+    "google-cloud-storage>=2.0",
+    "pandas>=2.0",
+    "polars>=1.0",
+    "requests>=2.0",
+    "SQLAlchemy>=2.0",
+    "streamlit>=1.0",
+]
+
+[project.optional-dependencies]
+postgres = ["psycopg[binary]>=3.2"]
+test = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.setuptools]
+py-modules = ["config"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["api*", "db*", "services*", "scripts*"]
