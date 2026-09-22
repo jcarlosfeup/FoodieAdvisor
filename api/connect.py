@@ -58,7 +58,7 @@ def transform(data: list, city_name: str) -> pl.DataFrame:
 
 
 def store_restaurants_to_db(df: pl.DataFrame) -> None:
-    """Store transformed restaurant data into SQLite database.
+    """Store transformed restaurant data in the configured PostgreSQL database.
     
     Args:
         df: Polars DataFrame containing restaurant data
