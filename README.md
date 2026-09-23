@@ -38,7 +38,8 @@ Docker Compose creates both the PostgreSQL container and the Streamlit container
 
 ```sh
 cp .env.example .env
-# Edit .env, especially POSTGRES_PASSWORD.
+# Edit .env, 
+# especially POSTGRES_PASSWORD.
 docker compose up --build
 ```
 
