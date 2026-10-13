@@ -1,8 +1,11 @@
 .git
 .venv
-__pycache__
-*.pyc
+**/__pycache__
+**/*.pyc
 .pytest_cache
-db/*.db
-foodie_advisor.egg-info
+.ruff_cache
 .env
+secrets
+data
+**/node_modules
+**/dist

@@ -1,4 +1,30 @@
+# Python
 .venv/
 __pycache__/
-*.json
-*.csv
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Local configuration and secrets
+.env
+secrets/
+*service-account*.json
+foodie-advisor-*.json
+
+# Data and databases
+data/
+*.db
+*.sqlite3
+
+# Frontend
+node_modules/
+dist/
+
+# dbt
+target/
+dbt_packages/
+logs/
+
+# OS / editors
+.DS_Store

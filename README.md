@@ -1,73 +1,61 @@
-## Current runtime
+# FoodieAdvisor
 
-Run the app with `streamlit run main.py` after setting `DATABASE_URL` to PostgreSQL.
+Discover restaurants in a city and explore them on an interactive map.
 
-- Cached flow: a city with local restaurants, such as Porto, reads PostgreSQL and does
-	not call Google Places. Porto currently returns 60 rows.
-- Uncached flow: a city with no local restaurants reads no rows, then calls Google
-	Places, transforms the response, stores it, and reads the stored rows back. A
-	missing `GOOGLE_APPLICATION_CREDENTIALS` now fails only when this flow is used.
+FoodieAdvisor is built as a small data platform:
 
-## Configuration
+- OpenStreetMap and GeoNames data is ingested into PostgreSQL/PostGIS.
+- dbt transforms it into application-ready models.
+- A FastAPI backend serves those models to a React + Leaflet frontend.
+- Everything runs in Docker Compose, and later in local Kubernetes.
 
-Configuration is loaded by `config.py` from environment variables. `DATABASE_URL`
-is required and must be a PostgreSQL URL. Set it along with
-`GOOGLE_APPLICATION_CREDENTIALS`, `GOOGLE_PLACES_BASE_URL`,
-`GOOGLE_FIELD_MASK`, `GOOGLE_MIN_RATING`, `GOOGLE_PAGINATION_DELAY_SECONDS`,
-`REQUEST_TIMEOUT_SECONDS`, `CITIES_CSV_PATH`, `RESTAURANTS_CSV_PATH`, and
-application path variables as needed.
+> **Status: Phase 1 (foundation).** The uv workspace, shared settings, the Google Places lab module and a development PostGIS database are in place. Ingestion, dbt, the API and the frontend arrive in later phases.
 
-## PostgreSQL setup and seed data
+## Requirements (macOS)
 
-Apply `migrations/001_initial.sql` to a PostgreSQL database, then run:
+- [uv](https://docs.astral.sh/uv/): `brew install uv`. It installs Python 3.12 automatically.
+- Docker Desktop, or another Docker engine.
+
+## Setup
 
 ```sh
-python -m scripts.import_seed_data
+uv sync                          # create .venv with all workspace packages and dev tools
+cp .env.example .env             # set POSTGRES_PASSWORD and the matching DATABASE_URL
+docker compose up -d db          # PostGIS 17 with the raw / core / mart schemas
 ```
 
-The repeatable import seeds the deduplicated city catalog from `world_cities.csv`
-and all 54 legacy restaurant rows from `restaurants.csv` with `source = 'csv'`.
-API-collected rows are not seed data because the CSV has no stable Google place IDs.
-
-Install dependencies with `python -m pip install -e '.[test]'` or add the PostgreSQL
-extra with `python -m pip install -e '.[postgres,test]'`.
-
-## Local containers
-
-Docker Compose creates both the PostgreSQL container and the Streamlit container:
+Check the database:
 
 ```sh
-cp .env.example .env
-# Edit .env, 
-# especially POSTGRES_PASSWORD.
-docker compose up --build
+docker compose exec db sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB -c "\dn" -c "SELECT postgis_version();"'
 ```
 
-Open `http://localhost:8501`. PostgreSQL is available from the host at
-`localhost:5432`, but the app must use the service name `postgres` in its internal
-URL. The migration is mounted into PostgreSQL's initialization directory, so it is
-executed automatically when the `postgres_data` volume is created for the first time.
+The SQL files in `db/init/` run only when the `pgdata` volume is first created.
+`docker compose down` keeps your data. `docker compose down -v` deletes it.
 
-To seed the database from a one-off app container:
+## Tests and linting
 
 ```sh
-docker compose run --rm app python -m scripts.import_seed_data
+uv run ruff check .
+uv run pytest -q
 ```
 
-To connect directly to the database container:
+## Repository layout
 
-```sh
-docker compose exec postgres psql -U foodie_advisor -d foodie_advisor
-```
+| Path | Purpose |
+|---|---|
+| `packages/foodie_common/` | Shared settings (`DATABASE_URL`), SQLAlchemy engine factory, JSON logging |
+| `collector/` | Ingestion jobs. Currently contains the Google Places lab module |
+| `db/init/` | Bootstrap SQL: PostGIS, `pg_trgm`, and the `raw`/`core`/`mart` schemas |
+| `compose.yaml` | Development database |
 
-The active Streamlit and Google collection paths use the PostgreSQL repository
-selected by `DATABASE_URL`. `docker compose down`
-preserves data; `docker compose down -v` deletes the database volume and causes
-initialization SQL to run again on the next startup.
+## Google Places lab
 
-If Docker reports `docker-credential-desktop.exe: exec format error` while pulling
-an image on Linux, Docker is using a Windows credential helper. Back up
-`~/.docker/config.json`, remove the `credsStore` entry, and retry the build. Docker
-can pull public images without that helper; authenticate later with `docker login`
-if you need private images.
+`foodie_collector.sources.google_places_lab` is an isolated experiment and never writes to the database. Google's terms restrict storing Places content, so the application's restaurant data comes from OpenStreetMap instead.
 
+To use the lab, put a service-account key under `secrets/` (gitignored) and set `GOOGLE_APPLICATION_CREDENTIALS` in `.env`.
+
+## Data attribution
+
+- Restaurant data © OpenStreetMap contributors, ODbL.
+- City data © GeoNames, CC BY 4.0.

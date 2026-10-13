@@ -1,0 +1,22 @@
+# Phase 1: development database only. The api, frontend, and job services arrive in Phase 6.
+services:
+  db:
+    # Multi-arch build of docker-postgis (the official postgis/postgis image is amd64-only).
+    image: imresamu/postgis:17-3.5
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-foodie}
+      POSTGRES_USER: ${POSTGRES_USER:-foodie}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

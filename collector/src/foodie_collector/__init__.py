@@ -1,0 +1,1 @@
+"""FoodieAdvisor data collector."""

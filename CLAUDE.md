@@ -2,207 +2,149 @@
 
 ## Purpose
 
-FoodieAdvisor is a Streamlit restaurant discovery application. It displays restaurants for a selected city, reads cached restaurants from PostgreSQL, and queries Google Places only when the selected city has no stored restaurants.
+FoodieAdvisor is a small cloud-native data platform with a restaurant discovery web application on top of it. Users pick a city and explore its restaurants on an interactive map.
 
-The application is PostgreSQL-only. SQLite was the original implementation but has been removed from the active repository and should not be reintroduced unless the project direction explicitly changes.
+- **Data:** OpenStreetMap (Overpass) restaurants and GeoNames cities flow through PostgreSQL/PostGIS in three layers: `raw` (landing), `core` (cleaned) and `mart` (application-ready).
+- **Application:** a read-only FastAPI backend and a React + TypeScript + Leaflet frontend.
+- **Operations:** Docker Compose locally, then local Kubernetes (k3d), GitHub Actions CI/CD and Prometheus/Grafana.
 
-## Runtime Architecture
+The project is being built in eight phases, one at a time, with a review after each:
 
-- `main.py`
-  - Streamlit entry point.
-  - Creates a repository from `settings.database_url`.
-  - Loads cities from PostgreSQL.
-  - Reads cached restaurants first.
-  - For a city with no restaurants, inserts the city if needed, calls Google Places, and reloads restaurants from PostgreSQL.
-- `config.py`
-  - Owns typed environment configuration.
-  - `DATABASE_URL` is mandatory.
-  - Only `postgresql://` and `postgresql+psycopg://` URLs are accepted.
-  - Importing the module creates `settings`, so tests that import `config` must set `DATABASE_URL` first or deliberately test the failure behavior.
-- `api/places_client.py`
-  - Owns Google Places HTTP requests, authentication refresh, pagination, timeout, and field mask handling.
-  - Must not persist data or transform response records.
-- `api/transformer.py`
-  - Converts Google Places response objects into application restaurant dictionaries.
-  - Preserves `google_place_id` when Google provides `id`.
-  - Skips records without a usable display name.
-- `api/connect.py`
-  - Compatibility facade around the Google client, transformer, and collection service.
-  - Uses `create_repository(settings.database_url)`.
-  - Do not add direct SQL or database-driver calls here.
-- `services/collection.py`
-  - Coordinates Google search, transformation, and repository persistence.
-  - It expects a repository implementing `save_restaurants()`.
-- `db/repositories.py`
-  - Contains the PostgreSQL persistence boundary.
-  - `PostgreSQLRepository` implements city lookup/insertion, city listing, restaurant listing, and restaurant upsert.
-  - `create_repository()` accepts PostgreSQL URLs only.
-- `scripts/import_seed_data.py`
-  - Repeatable seed/import command for the CSV files.
-- `migrations/001_initial.sql`
-  - Initial PostgreSQL schema.
-- `view/visualization.py`
-  - Streamlit presentation and map visualization. Keep database/API concerns out of this module.
+1. Environment
+2. Ingestion
+3. dbt
+4. API
+5. Frontend
+6. Compose
+7. k3d
+8. CI/CD and observability
 
-## Database Contract
+**Phase 1 (foundation) is the current state.**
 
-The PostgreSQL schema consists of:
+The Streamlit app, the SQLite database and the Google-centred `cities`/`restaurants` schema have been removed. Do not reintroduce them.
 
-- `cities`: city metadata and a uniqueness constraint across name, country, ISO, latitude, and longitude.
-- `restaurants`: restaurants linked to `cities`, with nullable stable `google_place_id`, ratings, coordinates, and source.
-- `collection_jobs`: intended job tracking table with pending/running/succeeded/failed states. The current application does not yet create or update collection jobs.
+## Data source rules (non-negotiable)
 
-Important invariants:
+- **Google Places is a lab only.** `collector/src/foodie_collector/sources/google_places_lab.py` may call Google and transform responses, but it never writes to the database. Google Places content (names, ratings, reviews, locations) must never enter the `raw`, `core` or `mart` schemas. Google's storage terms and EEA terms restrict persistent copies; only place IDs may be stored.
+- **OpenStreetMap** (ODbL) is the restaurant source. Show the attribution "© OpenStreetMap contributors" wherever its data or tiles are displayed.
+- **GeoNames** (`cities5000`, CC BY 4.0) is the city catalog. It needs attribution. Cities are identified by `geonameid`, never by name alone ("Porto, PT" ≠ "Porto, BR").
+- **Ratings** come only from independently sourced reviews. Never present a calculated score as a Google rating. Any synthetic review data must be flagged `is_synthetic`.
+- **Public Overpass service:** use it only for modest, controlled requests, with a timeout, backoff and a `User-Agent`.
 
-- Every restaurant must reference a city through `city_id`.
-- A city must be inserted before Google restaurants are persisted for an uncached city.
-- Google place IDs are the stable deduplication key when available.
-- PostgreSQL uses the table names `cities` and `restaurants`; do not use the old SQLite singular table names `city` and `restaurant`.
-- Use SQLAlchemy and parameterized SQL. Do not interpolate user or API data into SQL.
-- Keep transactions around related writes. `engine.begin()` is the established pattern.
+## Repository layout
+
+```
+pyproject.toml              uv workspace root (virtual, package = false): dev group, ruff, pytest config
+uv.lock                     single lockfile for the workspace — commit it
+.python-version             3.12
+packages/foodie_common/     shared library
+  settings.py               DatabaseSettings (pydantic-settings): DATABASE_URL required, PostgreSQL-only
+  db.py                     make_engine(): pooled SQLAlchemy engine, normalises postgresql:// to psycopg
+  logging.py                JsonFormatter / configure_logging(): structured JSON logs; pass extras via `extra=`
+collector/                  foodie_collector: ingestion jobs
+  settings.py               GooglePlacesLabSettings (no DATABASE_URL — the lab never persists)
+  sources/google_places_lab.py  GooglePlacesClient, transform_places(), lab_search()
+db/init/                    bootstrap SQL run by the Postgres entrypoint on first init only
+  00_extensions.sql         postgis, pg_trgm
+  01_schemas.sql            raw, core, mart
+compose.yaml                Phase 1: `db` service only
+.github/workflows/ci.yaml   uv sync --frozen, ruff, pytest
+```
+
+Planned additions:
+
+| Phase | Addition |
+|---|---|
+| 2 | `collector/sources/{openstreetmap,geonames}.py`, `collector/ingestion/`, a `foodie-collect` CLI, and `db/init/02_raw_tables.sql` |
+| 3 | `transformations/dbt/` |
+| 4 | `api/`, a FastAPI workspace member: add it to `[tool.uv.workspace].members` and the root dev group |
+| 5 | `frontend/` |
+| 7 | `infra/kubernetes/` |
+
+Keep these boundaries:
+
+- Source modules fetch and parse; loaders persist.
+- The API reads `mart` only.
+- The frontend never talks to the database.
+
+## Database contract
+
+- **Image:** `imresamu/postgis:17-3.5`. This is the multi-arch build of docker-postgis; the official `postgis/postgis` image is amd64-only and the development machine is Apple Silicon. Keep the image identical across Compose, CI and Kubernetes.
+- **Schema ownership:**
+  - `db/init/*.sql` owns extensions, schemas, raw landing tables, and any application-written tables such as future user reviews.
+  - **dbt owns everything in `core` and `mart`.** Do not hand-write DDL for those schemas.
+- **Init scripts run only when the data volume is empty.** For a change to `db/init` on an existing volume, either apply the SQL manually with `psql` or recreate the volume. Recreating the volume (`docker compose down -v`) deletes data, so only do it when that's intended.
+- **Planned raw layer (Phase 2):**
+  - `raw.ingestion_runs` holds run_id, source, target, timestamps, status, received/inserted/updated/rejected counts, and error.
+  - `raw.osm_restaurants` has PK `(osm_type, osm_id)`, plus `tags` JSONB and `_payload_hash`.
+  - `raw.geonames_cities` has PK `geonameid`.
+- **Ingestion must be idempotent.** Upsert on the natural key, and only update when the payload hash changes.
+- Use SQLAlchemy with parameterized SQL (`text()` plus bind params). Never interpolate user or API data into SQL.
+- Wrap related writes in `engine.begin()`.
 
 ## Configuration
 
-Required:
+- **`.env`** is gitignored, and `.env.example` documents every variable.
+- **Settings classes** are pydantic-settings classes that read the environment and `.env`. They fail explicitly when a required value is missing.
+- **Required for any database access:** `DATABASE_URL`.
+  - On the host it is `postgresql+psycopg://foodie:<pw>@localhost:5432/foodie`.
+  - Inside Compose the host is `db`, never `localhost`.
+- **Compose:** `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` (required; there is no default) and `POSTGRES_PORT`. The port is bound to `127.0.0.1`.
+- **Google lab (optional):**
+  - `GOOGLE_APPLICATION_CREDENTIALS`, which should point inside `secrets/`;
+  - `GOOGLE_PLACES_BASE_URL`, `GOOGLE_FIELD_MASK`, `GOOGLE_MIN_RATING`, `GOOGLE_PAGINATION_DELAY_SECONDS` and `REQUEST_TIMEOUT_SECONDS`.
 
-- `DATABASE_URL`: PostgreSQL URL, normally `postgresql+psycopg://user:password@host:5432/database`.
+## Secrets
 
-Google settings:
+- **Never commit** credentials, `.env`, or service-account JSON. They belong in `secrets/`, which is gitignored, or in environment variables.
+- **`.gitignore` doesn't ignore `*.json`,** so that `package.json` and `tsconfig.json` can be committed. Credential files are covered by explicit patterns: `secrets/`, `*service-account*.json` and `foodie-advisor-*.json`. Check `git status` before committing any JSON file.
+- **Old keys are in git history.** Commit `1878a15` removed keys that had been committed earlier, so they remain in history. The keys are being rotated in GCP. Purging history would mean `git filter-repo` plus a force-push, and that needs explicit approval from the user.
+- **Never bake credentials into images.** Mount them read-only (Compose) or use Secrets (Kubernetes).
 
-- `GOOGLE_APPLICATION_CREDENTIALS`
-- `GOOGLE_PLACES_BASE_URL`
-- `GOOGLE_FIELD_MASK`
-- `GOOGLE_MIN_RATING`
-- `GOOGLE_PAGINATION_DELAY_SECONDS`
-- `REQUEST_TIMEOUT_SECONDS`
-
-Paths:
-
-- `CITIES_CSV_PATH`
-- `RESTAURANTS_CSV_PATH`
-- `APP_ROOT`
-
-Never commit credentials or embed credential-file loading in Python modules. The current Compose file mounts the Google service-account JSON read-only at `/run/secrets/google_credentials.json`; treat that file as sensitive.
-
-## Container Workflow
-
-The intended local runtime is Docker Compose:
+## Development commands (macOS)
 
 ```sh
-cp .env.example .env
-# Set a non-default local POSTGRES_PASSWORD.
-docker compose up --build
-```
+brew install uv                 # once
+uv sync                         # creates .venv with all workspace members + dev tools
+uv run ruff check .             # lint (add --fix for import sorting)
+uv run pytest -q                # all tests (importlib mode, multiple tests/ dirs)
+uv run pytest collector/tests -q
 
-Services:
-
-- `postgres`: `postgres:16-alpine`, persistent named volume `postgres_data`.
-- `app`: Streamlit image built from `Dockerfile`.
-
-Compose behavior:
-
-- The app connects to hostname `postgres`, never `localhost`, because both services share the Compose network.
-- PostgreSQL has a `pg_isready` health check.
-- The app waits for the PostgreSQL health check through `depends_on`.
-- `migrations/001_initial.sql` is mounted into `/docker-entrypoint-initdb.d/`.
-- Initialization scripts run only when the PostgreSQL data directory is empty.
-- `docker compose down` preserves data.
-- `docker compose down -v` deletes the database volume and causes initialization SQL to run again.
-- Seed after startup with:
-
-```sh
-docker compose run --rm app python -m scripts.import_seed_data
-```
-
-Useful commands:
-
-```sh
-docker compose config
+cp .env.example .env            # then set POSTGRES_PASSWORD and the matching DATABASE_URL
+docker compose up -d db
 docker compose ps
-docker compose logs postgres
-docker compose logs app
-docker compose exec postgres psql -U foodie_advisor -d foodie_advisor
-docker compose build app
-docker compose up
+docker compose exec db sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB'
+docker compose down             # keeps data (volume `pgdata`)
 ```
 
-If Docker on Linux reports `docker-credential-desktop.exe: exec format error`, inspect `~/.docker/config.json`. A Windows `credsStore` entry such as `desktop.exe` is invalid in Linux. Back up the file, remove that entry, and retry public-image pulls.
+**Adding dependencies:**
+- To a member: `uv add --package foodie-collector <pkg>`.
+- Dev tools: `uv add --dev <pkg>`.
+- Always commit `uv.lock`.
 
-## Data and Seed Decisions
+## Testing guidance
 
-- `world_cities.csv` is the city catalog source. Import all records with deterministic deduplication based on the migration uniqueness fields.
-- `restaurants.csv` contains 54 legacy Porto restaurant records. Import them with `source = 'csv'`.
-- CSV restaurants do not have stable Google place IDs, so they are not treated as Google Places identity records.
-- API-collected restaurants use Google place IDs when available and are upserted by that ID.
-- Do not seed the checked-in historical database file; the application does not use it.
+- **No real network calls or external services in unit tests.** Use fake sessions and clients, as `collector/tests/test_google_places_lab.py` does with `FakeSession` and `FakeCredentials`. `GooglePlacesClient` accepts injected `session` and `credentials` for this.
+- **Settings tests** pass `_env_file=None` and set the environment with `monkeypatch`, so a developer's local `.env` can't leak into them.
+- **SQL behaviour** (ON CONFLICT, PostGIS, FKs) is tested against an isolated PostGIS database, never a shared or production one. Plan for this from Phase 2.
+- **Ingestion and dbt changes:**
+  - test idempotency: a second run inserts 0 rows;
+  - test missing and malformed source fields;
+  - test rejected-record accounting.
 
-## Development Commands
+## Design rules
 
-Use the project virtual environment when working locally:
+- Prefer the source/loader/service boundaries over putting logic in CLIs or route handlers.
+- Keep HTTP clients free of persistence and transformation, and keep timeouts and field masks configuration-driven.
+- Keep each phase's scope tight: build a working slice before adding technology. No Spark, Kafka, Airflow, Redis or microservices without a demonstrated need.
+- Use pinned image tags, never `latest`, in Compose and Kubernetes.
+- Don't commit generated files: `.venv`, caches, `data/`, dbt `target/`, `node_modules/`, `dist/`.
 
-```sh
-source .venv/bin/activate
-python -m pip install -e '.[test]'
-python -m pip install -e '.[postgres,test]'
-python -m pytest -q
-python -m compileall -q config.py api db services scripts tests main.py
-```
+## Change checklist
 
-The current verified test suite covers configuration, response transformation, and collection behavior. Run focused tests first when changing one area, then run the full suite.
-
-## Testing Guidance
-
-Tests should avoid real Google API calls and real production databases.
-
-- Use fake clients for Google collection service tests.
-- Use isolated PostgreSQL integration tests when testing SQL behavior that SQLite cannot model. The application SQL is PostgreSQL-specific.
-- Test configuration with `DATABASE_URL` set before importing `config` when necessary.
-- Test both cached and uncached city flows.
-- Test stable Google place ID upserts and city foreign-key ordering.
-- Test repeated seed imports for idempotency.
-- Keep credentials, real API calls, and secrets out of tests.
-
-## Design Rules
-
-- Prefer the existing repository/service/client boundaries over adding logic to `main.py` or `api/connect.py`.
-- Keep public function signatures stable unless a change is necessary.
-- Use typed configuration and explicit failures for missing required settings.
-- Preserve API response fields needed by persistence, especially `id`/`google_place_id`.
-- Avoid broad refactors unrelated to the requested behavior.
-- Do not reintroduce SQLite compatibility code, SQLite defaults, or old helper imports.
-- Do not commit generated files such as `__pycache__`, `.pytest_cache`, editable-install metadata, local `.env`, credentials, or Docker build artifacts.
-- Do not commit the Google service-account JSON file. If it is already tracked, treat that as a security issue and remove it from version control through the appropriate repository process.
-
-## Known Gaps and Next Work
-
-- `collection_jobs` exists in the schema but is not yet integrated into the collection service.
-- There is no formal migration runner/version table; the current first migration relies on PostgreSQL container initialization.
-- The seed importer uses SQLAlchemy and assumes the target schema has already been applied.
-- PostgreSQL integration tests are still needed for repository SQL, especially `ON CONFLICT`, foreign keys, and repeatable imports.
-- Google authentication currently uses a service-account credentials file. Prefer a secret manager or workload identity for production deployments.
-- The container currently mounts the credential JSON from the host. This is acceptable only for local development.
-
-## Change Checklist
-
-Before changing persistence:
-
-1. Read `migrations/001_initial.sql` and `db/repositories.py`.
-2. Confirm whether the change affects city foreign keys, Google place ID uniqueness, or seed idempotency.
+1. Read the affected module and its tests, plus `db/init/*.sql` for persistence changes.
+2. Check the data-source rules above, especially that no Google content reaches the database.
 3. Add or update a focused test.
-4. Run `python -m pytest -q`.
-5. Run Python compilation checks.
-6. If container behavior changes, run `docker compose config` and rebuild the affected image.
-
-Before changing Google collection:
-
-1. Read `api/places_client.py`, `api/transformer.py`, and `services/collection.py`.
-2. Keep HTTP, transformation, and persistence responsibilities separate.
-3. Test malformed/missing Google fields and pagination behavior without real network calls.
-4. Verify the timeout and field mask remain configuration-driven.
-
-Before changing container/database startup:
-
-1. Check whether the PostgreSQL volume already exists; initialization SQL will not rerun automatically.
-2. Prefer a new migration over editing an already-applied migration for shared environments.
-3. Never delete `postgres_data` unless data loss is intended.
-4. Verify the app URL uses `postgres` as the host inside Compose.
+4. Run `uv run ruff check .` and `uv run pytest -q`.
+5. If `db/init` or `compose.yaml` changed, run `docker compose config`, and remember that init SQL doesn't rerun on an existing volume.
+6. Update this file and `README.md` when the architecture or commands change.

@@ -1,0 +1,14 @@
+[project]
+name = "foodie-common"
+version = "0.1.0"
+description = "Shared settings, database, and logging helpers for FoodieAdvisor services"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pydantic-settings>=2.4",
+    "SQLAlchemy>=2.0",
+    "psycopg[binary]>=3.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

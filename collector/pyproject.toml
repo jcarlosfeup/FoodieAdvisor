@@ -1,0 +1,17 @@
+[project]
+name = "foodie-collector"
+version = "0.1.0"
+description = "FoodieAdvisor data ingestion jobs (OpenStreetMap, GeoNames) and the Google Places lab"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "foodie-common",
+    "google-auth>=2.0",
+    "requests>=2.32",
+]
+
+[tool.uv.sources]
+foodie-common = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
