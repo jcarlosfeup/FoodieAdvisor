@@ -1,30 +1,60 @@
 # Python
 .venv/
 __pycache__/
-*.pyc
+*.py[cod]
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
 *.egg-info/
+build/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
 
 # Local configuration and secrets
 .env
+.env.*
+!.env.example
 secrets/
 *service-account*.json
 foodie-advisor-*.json
+*.pem
+*.key
+*.p12
+*.pfx
+kubeconfig*
+infra/**/*secret*.local.yaml
 
 # Data and databases
 data/
 *.db
 *.sqlite3
+*.dump
+*.sql.gz
 
-# Frontend
+# Frontend (Phase 5)
 node_modules/
 dist/
+coverage/
+.vite/
+*.tsbuildinfo
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# dbt
+# dbt (Phase 3)
 target/
 dbt_packages/
 logs/
+.user.yml
+
+# Logs
+*.log
 
 # OS / editors
 .DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json

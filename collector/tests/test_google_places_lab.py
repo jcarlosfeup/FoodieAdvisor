@@ -46,21 +46,30 @@ def lab_settings(**overrides):
 
 def test_transform_places_flattens_google_response_and_keeps_place_id():
     result = transform_places(
-        [{
-            "id": "places/abc",
-            "displayName": {"text": "Cafe"},
-            "rating": 4.6,
-            "userRatingCount": 12,
-            "priceLevel": "PRICE_LEVEL_MODERATE",
-            "location": {"latitude": 41.1, "longitude": -8.6},
-        }],
+        [
+            {
+                "id": "places/abc",
+                "displayName": {"text": "Cafe"},
+                "rating": 4.6,
+                "userRatingCount": 12,
+                "priceLevel": "PRICE_LEVEL_MODERATE",
+                "location": {"latitude": 41.1, "longitude": -8.6},
+            }
+        ],
         "Porto",
     )
-    assert result == [{
-        "google_place_id": "places/abc", "name": "Cafe", "city": "Porto",
-        "rating": 4.6, "ratings_count": 12, "price_level": "PRICE_LEVEL_MODERATE",
-        "latitude": 41.1, "longitude": -8.6,
-    }]
+    assert result == [
+        {
+            "google_place_id": "places/abc",
+            "name": "Cafe",
+            "city": "Porto",
+            "rating": 4.6,
+            "ratings_count": 12,
+            "price_level": "PRICE_LEVEL_MODERATE",
+            "latitude": 41.1,
+            "longitude": -8.6,
+        }
+    ]
 
 
 def test_transform_places_skips_places_without_names():
@@ -74,10 +83,12 @@ def test_transform_places_tolerates_missing_location_and_counts():
 
 
 def test_client_follows_pagination_and_sends_configured_field_mask():
-    session = FakeSession([
-        {"places": [{"id": "a"}], "nextPageToken": "page-2"},
-        {"places": [{"id": "b"}]},
-    ])
+    session = FakeSession(
+        [
+            {"places": [{"id": "a"}], "nextPageToken": "page-2"},
+            {"places": [{"id": "b"}]},
+        ]
+    )
     client = GooglePlacesClient(lab_settings(google_field_mask="places.id"), session, FakeCredentials())
 
     assert client.search_restaurants("restaurants in Porto") == [{"id": "a"}, {"id": "b"}]

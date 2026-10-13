@@ -1,0 +1,16 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API (fixture)",
+  "osm3s": {"copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."},
+  "elements": [
+    {"type": "node", "id": 101, "lat": 41.1455, "lon": -8.6110,
+     "tags": {"amenity": "restaurant", "name": "Tasca do Porto", "cuisine": "portuguese;regional", "website": "https://example.org"}},
+    {"type": "way", "id": 202, "center": {"lat": 41.1490, "lon": -8.6080},
+     "nodes": [1, 2, 3], "tags": {"amenity": "restaurant", "name": "Casa da Ribeira"}},
+    {"type": "relation", "id": 303, "center": {"lat": 41.1500, "lon": -8.6200},
+     "tags": {"amenity": "restaurant"}},
+    {"type": "node", "id": 404, "lat": 41.1510, "lon": -8.6150},
+    {"type": "way", "id": 505, "tags": {"amenity": "restaurant", "name": "No centre"}},
+    {"type": "node", "id": 606, "lat": 141.0, "lon": -8.6, "tags": {"name": "Off the globe"}}
+  ]
+}
