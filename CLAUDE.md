@@ -2,7 +2,7 @@
 
 ## Purpose
 
-FoodieAdvisor is a small cloud-native data platform with a restaurant discovery web application on top of it. Users pick a city and explore its restaurants on an interactive map.
+FoodieAdvisor is a small cloud-native data platform with a restaurant discovery web application on top of it. Users pick a city and explore its **traditional** restaurants (the cuisine of the city's own country) on an interactive map.
 
 - **Data:** OpenStreetMap (Overpass) restaurants and GeoNames cities flow through PostgreSQL/PostGIS in three layers: `raw` (landing), `core` (cleaned) and `mart` (application-ready).
 - **Application:** a read-only FastAPI backend and a React + TypeScript + Leaflet frontend.
@@ -19,13 +19,18 @@ The project is being built in eight phases, one at a time, with a review after e
 7. k3d
 8. CI/CD and observability
 
-**Phase 1 (foundation) is the current state.**
+**Phases 1 (foundation) and 2 (ingestion into `raw`) are done.** Phase 3 (dbt core/mart) is next.
 
 The Streamlit app, the SQLite database and the Google-centred `cities`/`restaurants` schema have been removed. Do not reintroduce them.
 
 ## Data source rules (non-negotiable)
 
-- **Google Places is a lab only.** `collector/src/foodie_collector/sources/google_places_lab.py` may call Google and transform responses, but it never writes to the database. Google Places content (names, ratings, reviews, locations) must never enter the `raw`, `core` or `mart` schemas. Google's storage terms and EEA terms restrict persistent copies; only place IDs may be stored.
+- **Only traditional restaurants are collected.** The Overpass query is filtered per country by `foodie_collector/traditional.py`: a restaurant qualifies when its `cuisine` list contains the national cuisine (e.g. `portuguese`, `francesinha` for PT) or `regional`/`local`, or its `name` contains a traditional-eatery keyword (e.g. tasca, taberna, adega). Countries without a rule fail explicitly; add a `TraditionalRule` plus a test to support one. The rule used is stored in `raw.ingestion_runs.parameters.traditional_rule`.
+- **Google Places: place IDs plus live ratings only.** The decided design:
+  - Store only the Google place ID linked to an OSM restaurant (place IDs are exempt from Google's caching limits). Matching may use Google's name/location transiently, but they are never stored.
+  - The API fetches ratings live by place ID at display time, shows them with Google attribution, and never persists them.
+  - Google content (names, ratings, reviews, locations, or anything derived from them, such as "Google says this is traditional" or "rated above 4") must never decide which records are stored or enter `raw`, `core` or `mart`. Selection stays OSM-based.
+  - `google_places_lab.py` remains the experiment module and never writes to the database. The place-ID linking job and the live-rating endpoint are not built yet (see Planned additions).
 - **OpenStreetMap** (ODbL) is the restaurant source. Show the attribution "© OpenStreetMap contributors" wherever its data or tiles are displayed.
 - **GeoNames** (`cities5000`, CC BY 4.0) is the city catalog. It needs attribution. Cities are identified by `geonameid`, never by name alone ("Porto, PT" ≠ "Porto, BR").
 - **Ratings** come only from independently sourced reviews. Never present a calculated score as a Google rating. Any synthetic review data must be flagged `is_synthetic`.
@@ -41,23 +46,36 @@ packages/foodie_common/     shared library
   settings.py               DatabaseSettings (pydantic-settings): DATABASE_URL required, PostgreSQL-only
   db.py                     make_engine(): pooled SQLAlchemy engine, normalises postgresql:// to psycopg
   logging.py                JsonFormatter / configure_logging(): structured JSON logs; pass extras via `extra=`
-collector/                  foodie_collector: ingestion jobs
-  settings.py               GooglePlacesLabSettings (no DATABASE_URL — the lab never persists)
-  sources/google_places_lab.py  GooglePlacesClient, transform_places(), lab_search()
+  testing.py                temporary_database(): isolated PostGIS DB for integration tests
+collector/                  foodie_collector: ingestion jobs (CLI `foodie-collect`)
+  settings.py               CollectorSettings (DATABASE_URL + Overpass/GeoNames/HTTP), GooglePlacesLabSettings
+  models.py                 BoundingBox.around(), CityTarget, Rejection, ParseResult
+  traditional.py            TraditionalRule per country (cuisines + name keywords), traditional_rule()
+  http.py                   build_client(), request_with_retries(): backoff on transport errors/429/5xx, Retry-After
+  sources/openstreetmap.py  OverpassClient, build_restaurant_query(bbox, timeout, rule), parse_elements()
+  sources/geonames.py       GeoNamesDownloader (cache in data/geonames), parse_cities(), parse_countries()
+  sources/google_places_lab.py  GooglePlacesClient, transform_places(), lab_search() — never persists
+  ingestion/raw_loader.py   RawTable specs + load_records(): hash-based idempotent upsert, deduplicate()
+  ingestion/runs.py         tracked_run() context manager -> raw.ingestion_runs; record_rejections()
+  ingestion/targets.py      city_by_name(name, CC) / city_by_geonameid() from raw.geonames_cities
+  ingestion/collect_*.py    collect_restaurants(), collect_countries(), collect_cities()
+  cli.py                    `foodie-collect cities|restaurants`
+  tests/                    unit tests (fakes, httpx.MockTransport) + integration tests (marker `integration`)
 db/init/                    bootstrap SQL run by the Postgres entrypoint on first init only
   00_extensions.sql         postgis, pg_trgm
   01_schemas.sql            raw, core, mart
-compose.yaml                Phase 1: `db` service only
-.github/workflows/ci.yaml   uv sync --frozen, ruff, pytest
+  02_raw_tables.sql         raw.ingestion_runs, rejected_records, geonames_countries/cities, osm_restaurants
+compose.yaml                `db` service only until Phase 6
+.github/workflows/ci.yaml   PostGIS service; uv sync --frozen, ruff format --check, ruff check, pytest (incl. integration)
 ```
 
 Planned additions:
 
 | Phase | Addition |
 |---|---|
-| 2 | `collector/sources/{openstreetmap,geonames}.py`, `collector/ingestion/`, a `foodie-collect` CLI, and `db/init/02_raw_tables.sql` |
 | 3 | `transformations/dbt/` |
-| 4 | `api/`, a FastAPI workspace member: add it to `[tool.uv.workspace].members` and the root dev group |
+| 3–4 | Google place-ID linking job (`raw.google_place_links`: OSM key → place ID only) |
+| 4 | `api/`, a FastAPI workspace member: add it to `[tool.uv.workspace].members` and the root dev group. Includes the live Google rating lookup by place ID (not persisted) |
 | 5 | `frontend/` |
 | 7 | `infra/kubernetes/` |
 
@@ -74,11 +92,15 @@ Keep these boundaries:
   - `db/init/*.sql` owns extensions, schemas, raw landing tables, and any application-written tables such as future user reviews.
   - **dbt owns everything in `core` and `mart`.** Do not hand-write DDL for those schemas.
 - **Init scripts run only when the data volume is empty.** For a change to `db/init` on an existing volume, either apply the SQL manually with `psql` or recreate the volume. Recreating the volume (`docker compose down -v`) deletes data, so only do it when that's intended.
-- **Planned raw layer (Phase 2):**
-  - `raw.ingestion_runs` holds run_id, source, target, timestamps, status, received/inserted/updated/rejected counts, and error.
-  - `raw.osm_restaurants` has PK `(osm_type, osm_id)`, plus `tags` JSONB and `_payload_hash`.
-  - `raw.geonames_cities` has PK `geonameid`.
-- **Ingestion must be idempotent.** Upsert on the natural key, and only update when the payload hash changes.
+- **Raw layer** (`db/init/02_raw_tables.sql`):
+  - `raw.ingestion_runs`: one row per run (UUID, source, target, `parameters` JSONB, status running/succeeded/failed, received/inserted/updated/unchanged/rejected counts, error). The run row is committed before data work, so failed runs stay visible.
+  - `raw.rejected_records`: records that could not be landed (missing/invalid coordinates, bad rows, in-batch duplicates), with payload and reason.
+  - `raw.geonames_countries` (PK `iso_alpha2`), `raw.geonames_cities` (PK `geonameid`, all GeoNames columns).
+  - `raw.osm_restaurants`: PK `(osm_type, osm_id)`, lat/lon (node coords or way/relation `center`), all OSM `tags` as JSONB. Only traditional restaurants are fetched; rows from older, unfiltered runs or from earlier rule versions stop being "last seen", so dbt should only use rows seen by the latest successful run per city. No city column: restaurants can fall inside several cities' boxes (Porto and Gaia overlap heavily), so city assignment belongs to dbt.
+  - Metadata on every data table: `_payload_hash`, `_run_id` (last change), `_first_loaded_at`, `_loaded_at`, `_last_seen_run_id`, `_last_seen_at` (use these to detect records that vanished from the source).
+- **Ingestion is idempotent.** `load_records()` hashes each record's data columns, reads stored hashes, inserts new keys, updates changed ones and only touches `_last_seen_*` for unchanged ones. A rerun reports `inserted = updated = 0`. Keep that property for any new raw table by declaring a `RawTable` spec.
+- **Raw stays close to the source.** Only reject records that cannot be stored (no coordinates or identity). Unnamed restaurants, odd tags, etc. are cleaned in dbt.
+- **Adding a raw table:** add DDL to `db/init/` (new numbered file once shared environments exist), add a `RawTable` spec, then apply the SQL to existing volumes: `docker compose exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -U $POSTGRES_USER -d $POSTGRES_DB' < db/init/NN_file.sql`.
 - Use SQLAlchemy with parameterized SQL (`text()` plus bind params). Never interpolate user or API data into SQL.
 - Wrap related writes in `engine.begin()`.
 
@@ -90,6 +112,8 @@ Keep these boundaries:
   - On the host it is `postgresql+psycopg://foodie:<pw>@localhost:5432/foodie`.
   - Inside Compose the host is `db`, never `localhost`.
 - **Compose:** `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` (required; there is no default) and `POSTGRES_PORT`. The port is bound to `127.0.0.1`.
+- **Collector** (`CollectorSettings`, all optional with defaults in `.env.example`): `DATA_DIR`, `OVERPASS_URL`, `OVERPASS_QUERY_TIMEOUT_SECONDS`, `OVERPASS_REQUEST_DELAY_SECONDS`, `DEFAULT_RADIUS_KM`, `GEONAMES_BASE_URL`, `GEONAMES_CITIES_FILE`, `HTTP_USER_AGENT`, `HTTP_TIMEOUT_SECONDS`, `HTTP_MAX_ATTEMPTS`, `HTTP_BACKOFF_SECONDS`.
+- **Tests:** `TEST_DATABASE_URL` points at a disposable server's maintenance DB (e.g. `.../postgres`); integration tests skip without it.
 - **Google lab (optional):**
   - `GOOGLE_APPLICATION_CREDENTIALS`, which should point inside `secrets/`;
   - `GOOGLE_PLACES_BASE_URL`, `GOOGLE_FIELD_MASK`, `GOOGLE_MIN_RATING`, `GOOGLE_PAGINATION_DELAY_SECONDS` and `REQUEST_TIMEOUT_SECONDS`.
@@ -115,6 +139,17 @@ docker compose up -d db
 docker compose ps
 docker compose exec db sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB'
 docker compose down             # keeps data (volume `pgdata`)
+
+uv run ruff format .            # formatter (CI runs `ruff format --check`)
+
+# Ingestion (needs DATABASE_URL; run cities first, restaurants resolve targets from it)
+uv run foodie-collect cities                    # GeoNames countries + cities5000 (cached in data/geonames)
+uv run foodie-collect restaurants --city "Porto,PT" --city "Vila Nova de Gaia,PT" --city "Lisbon,PT"
+uv run foodie-collect restaurants --geonameid 2735943 --radius-km 3
+
+# Integration tests: throwaway DB on the Compose server, dropped afterwards
+set -a; . ./.env; set +a
+TEST_DATABASE_URL="postgresql+psycopg://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost:$POSTGRES_PORT/postgres" uv run pytest -q
 ```
 
 **Adding dependencies:**
@@ -126,7 +161,8 @@ docker compose down             # keeps data (volume `pgdata`)
 
 - **No real network calls or external services in unit tests.** Use fake sessions and clients, as `collector/tests/test_google_places_lab.py` does with `FakeSession` and `FakeCredentials`. `GooglePlacesClient` accepts injected `session` and `credentials` for this.
 - **Settings tests** pass `_env_file=None` and set the environment with `monkeypatch`, so a developer's local `.env` can't leak into them.
-- **SQL behaviour** (ON CONFLICT, PostGIS, FKs) is tested against an isolated PostGIS database, never a shared or production one. Plan for this from Phase 2.
+- **SQL behaviour** (ON CONFLICT, PostGIS, FKs) is tested against an isolated PostGIS database, never a shared or production one. Use the `pg_engine` fixture (`collector/tests/conftest.py`), built on `foodie_common.testing.temporary_database()`: it creates a uniquely named database, applies `db/init/*.sql`, truncates raw tables between tests and drops the database at the end. Mark such modules `pytestmark = pytest.mark.integration`.
+- **HTTP sources** are tested with `httpx.MockTransport` and an injected `sleep` (no real waits); see `collector/tests/test_openstreetmap.py`.
 - **Ingestion and dbt changes:**
   - test idempotency: a second run inserts 0 rows;
   - test missing and malformed source fields;
@@ -145,6 +181,6 @@ docker compose down             # keeps data (volume `pgdata`)
 1. Read the affected module and its tests, plus `db/init/*.sql` for persistence changes.
 2. Check the data-source rules above, especially that no Google content reaches the database.
 3. Add or update a focused test.
-4. Run `uv run ruff check .` and `uv run pytest -q`.
+4. Run `uv run ruff format .`, `uv run ruff check .` and `uv run pytest -q` (with `TEST_DATABASE_URL` for SQL changes).
 5. If `db/init` or `compose.yaml` changed, run `docker compose config`, and remember that init SQL doesn't rerun on an existing volume.
 6. Update this file and `README.md` when the architecture or commands change.
