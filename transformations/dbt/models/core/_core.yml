@@ -1,0 +1,70 @@
+version: 2
+
+models:
+  - name: country
+    columns:
+      - name: country_code
+        data_tests: [unique, not_null]
+
+  - name: city
+    description: GeoNames cities, identified by geonameid.
+    columns:
+      - name: city_id
+        data_tests: [unique, not_null]
+      - name: latitude
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments: { min_value: -90, max_value: 90 }
+      - name: longitude
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments: { min_value: -180, max_value: 180 }
+
+  - name: restaurant
+    description: >
+      Current traditional restaurants with a name, assigned to a collected city.
+      Data © OpenStreetMap contributors (ODbL). Never contains Google content.
+    columns:
+      - name: restaurant_id
+        data_tests: [unique, not_null]
+      - name: source
+        description: Must stay 'openstreetmap'; Google data may never be stored here.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["openstreetmap"]
+      - name: source_restaurant_id
+        data_tests: [unique, not_null]
+      - name: name
+        data_tests: [not_null]
+      - name: city_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('city')
+                field: city_id
+      - name: latitude
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments: { min_value: -90, max_value: 90 }
+      - name: longitude
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments: { min_value: -180, max_value: 180 }
+      - name: cuisines
+        description: Array of normalised OSM cuisine values (empty if untagged).
+        data_tests: [not_null]
+      - name: geom
+        data_tests: [not_null]
+
+  - name: restaurant_excluded
+    description: Restaurants in raw that are not in core.restaurant, with the reason.
+    columns:
+      - name: restaurant_id
+        data_tests: [unique, not_null]
+      - name: exclusion_reason
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["not_current", "missing_name", "no_collected_city"]

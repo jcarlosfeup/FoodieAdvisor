@@ -1,0 +1,24 @@
+name: foodie_advisor
+version: "0.1.0"
+config-version: 2
+profile: foodie_advisor
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  foodie_advisor:
+    staging:
+      +schema: staging
+      +materialized: view
+    intermediate:
+      +schema: staging
+      +materialized: view
+    core:
+      +schema: core
+      +materialized: table
+    mart:
+      +schema: mart
+      +materialized: table

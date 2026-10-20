@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: int_restaurant_currency
+    description: Whether each restaurant was seen by every latest collection run whose box contains it.
+    columns:
+      - name: restaurant_id
+        data_tests: [unique, not_null]
+
+  - name: int_restaurant_city
+    description: Nearest collected city centre among the latest runs whose box contains the restaurant.
+    columns:
+      - name: restaurant_id
+        data_tests: [unique, not_null]
+
+unit_tests:
+  - name: int_restaurant_currency_requires_every_covering_latest_run
+    model: int_restaurant_currency
+    given:
+      - input: ref('stg_osm_restaurants')
+        rows:
+          - { restaurant_id: n1, latitude: 41.15, longitude: -8.60, last_seen_at: "2026-10-20 10:00:00+00" }
+          - { restaurant_id: n2, latitude: 41.15, longitude: -8.60, last_seen_at: "2026-10-01 10:00:00+00" }
+          - { restaurant_id: n3, latitude: 10.00, longitude: 10.00, last_seen_at: "2026-10-20 10:00:00+00" }
+          - { restaurant_id: n4, latitude: 41.13, longitude: -8.60, last_seen_at: "2026-10-15 10:00:00+00" }
+      - input: ref('stg_osm_collection_runs')
+        rows:
+          # Porto box, run on the 20th; Gaia box overlapping its south part, run on the 10th.
+          - { city_id: 1, started_at: "2026-10-20 09:00:00+00", bbox_south: 41.12, bbox_west: -8.7, bbox_north: 41.20, bbox_east: -8.5 }
+          - { city_id: 2, started_at: "2026-10-10 09:00:00+00", bbox_south: 41.05, bbox_west: -8.7, bbox_north: 41.14, bbox_east: -8.5 }
+    expect:
+      rows:
+        - { restaurant_id: n1, is_current: true, covering_run_count: 1 }
+        - { restaurant_id: n2, is_current: false, covering_run_count: 1 }   # stale: not seen by Porto's latest run
+        - { restaurant_id: n3, is_current: false, covering_run_count: 0 }   # outside every collected box
+        - { restaurant_id: n4, is_current: false, covering_run_count: 2 }   # seen by Gaia, missed by Porto
+
+  - name: int_restaurant_city_picks_nearest_collected_city
+    model: int_restaurant_city
+    given:
+      - input: ref('stg_osm_restaurants')
+        rows:
+          - { restaurant_id: n1, latitude: 41.145, longitude: -8.61 }
+          - { restaurant_id: n2, latitude: 41.125, longitude: -8.61 }
+          - { restaurant_id: n3, latitude: 10.00, longitude: 10.00 }
+      - input: ref('stg_osm_collection_runs')
+        rows:
+          - { city_id: 1, bbox_south: 41.10, bbox_west: -8.7, bbox_north: 41.20, bbox_east: -8.5 }
+          - { city_id: 2, bbox_south: 41.05, bbox_west: -8.7, bbox_north: 41.16, bbox_east: -8.5 }
+      - input: ref('city')
+        rows:
+          - { city_id: 1, latitude: 41.15, longitude: -8.61 }    # Porto centre
+          - { city_id: 2, latitude: 41.12, longitude: -8.61 }    # Gaia centre
+          - { city_id: 3, latitude: 41.145, longitude: -8.61 }   # a place nobody collected
+    expect:
+      rows:
+        - { restaurant_id: n1, city_id: 1 }
+        - { restaurant_id: n2, city_id: 2 }

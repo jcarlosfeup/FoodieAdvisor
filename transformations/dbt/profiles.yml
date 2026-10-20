@@ -1,0 +1,14 @@
+# Connection comes from the same variables as Compose (.env). Run dbt with:
+#   uv run --env-file .env dbt build --project-dir transformations/dbt --profiles-dir transformations/dbt
+foodie_advisor:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('DBT_POSTGRES_HOST', 'localhost') }}"
+      port: "{{ env_var('POSTGRES_PORT', '5432') | as_number }}"
+      user: "{{ env_var('POSTGRES_USER') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD') }}"
+      dbname: "{{ env_var('POSTGRES_DB') }}"
+      schema: staging
+      threads: 4

@@ -1,0 +1,72 @@
+version: 2
+
+models:
+  - name: stg_osm_restaurants
+    description: OSM restaurants with tags extracted into typed columns.
+    columns:
+      - name: restaurant_id
+        description: OSM short id (n123 node, w123 way, r123 relation).
+        data_tests: [unique, not_null]
+      - name: osm_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["node", "way", "relation"]
+      - name: cuisine_list
+        description: Lower-cased, de-duplicated, sorted values of the OSM cuisine tag joined with ';' (null if untagged).
+      - name: latitude
+        data_tests: [not_null]
+      - name: longitude
+        data_tests: [not_null]
+
+  - name: stg_geonames_cities
+    columns:
+      - name: city_id
+        description: GeoNames geonameid.
+        data_tests: [unique, not_null]
+
+  - name: stg_geonames_countries
+    columns:
+      - name: country_code
+        data_tests: [unique, not_null]
+
+  - name: stg_osm_collection_runs
+    description: Latest successful traditional-filtered Overpass run per city, with its search box (bbox_*).
+    columns:
+      - name: city_id
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_geonames_cities')
+                field: city_id
+
+unit_tests:
+  - name: stg_osm_restaurants_extracts_tags
+    model: stg_osm_restaurants
+    given:
+      - input: source('raw', 'osm_restaurants')
+        rows:
+          - osm_type: node
+            osm_id: 101
+            latitude: 41.1
+            longitude: -8.6
+            tags: '{"name": "  Tasca do Porto ", "cuisine": "Regional; portuguese;;portuguese", "website": "tasca.pt"}'
+          - osm_type: way
+            osm_id: 202
+            latitude: 41.2
+            longitude: -8.5
+            tags: '{"name": "", "contact:website": "https://adega.pt", "contact:phone": "+351 1"}'
+    expect:
+      rows:
+        - restaurant_id: n101
+          name: Tasca do Porto
+          cuisine_list: portuguese;regional
+          website: https://tasca.pt
+          phone: null
+        - restaurant_id: w202
+          name: null
+          cuisine_list: null
+          website: https://adega.pt
+          phone: "+351 1"

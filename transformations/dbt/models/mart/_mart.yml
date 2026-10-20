@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: restaurant_search
+    description: API-ready restaurants. Ratings are fetched live from Google by the API and never stored.
+    columns:
+      - name: restaurant_id
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('restaurant')
+                field: restaurant_id
+      - name: city_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('city_summary')
+                field: city_id
+      - name: osm_url
+        data_tests: [not_null]
+
+  - name: city_summary
+    description: Cities with at least one restaurant, for the city selector.
+    columns:
+      - name: city_id
+        data_tests: [unique, not_null]
+      - name: restaurant_count
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments: { min_value: 1 }
+
+  - name: country_summary
+    columns:
+      - name: country_code
+        data_tests: [unique, not_null]
