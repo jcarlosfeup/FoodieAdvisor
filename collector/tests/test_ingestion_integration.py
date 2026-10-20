@@ -11,6 +11,7 @@ from foodie_collector.ingestion.collect_cities import collect_cities, collect_co
 from foodie_collector.ingestion.collect_restaurants import collect_restaurants
 from foodie_collector.ingestion.targets import CityLookupError, city_by_geonameid, city_by_name
 from foodie_collector.models import CityTarget
+from foodie_collector.traditional import UnsupportedCountryError
 
 pytestmark = pytest.mark.integration
 
@@ -23,9 +24,11 @@ class FakeOverpass:
         self.elements = elements if elements is not None else FIXTURE["elements"]
         self.error = error
         self.bboxes = []
+        self.rules = []
 
-    def fetch_restaurants(self, bbox):
+    def fetch_restaurants(self, bbox, rule):
         self.bboxes.append(bbox)
+        self.rules.append(rule)
         if self.error:
             raise self.error
         return copy.deepcopy(self.elements)
@@ -110,7 +113,26 @@ def test_run_is_recorded_with_counts_and_rejections(pg_engine):
     assert run.finished_at >= run.started_at
     assert (run.received_count, run.inserted_count, run.rejected_count) == (6, 4, 2)
     assert run.parameters["geonameid"] == 2735943
+    assert "portuguese" in run.parameters["traditional_rule"]["cuisines"]
+    assert "tasca" in run.parameters["traditional_rule"]["name_keywords"]
     assert reasons == [("node/606", "invalid_coordinates"), ("way/505", "missing_coordinates")]
+
+
+def test_collector_passes_the_city_country_rule_to_the_source(pg_engine):
+    source = FakeOverpass()
+    collect_restaurants(pg_engine, source, PORTO, radius_km=5)
+    assert [rule.country_code for rule in source.rules] == ["PT"]
+
+
+def test_unsupported_country_fails_before_recording_a_run(pg_engine):
+    nowhere = CityTarget(1, "Nowhere", "ZZ", 0.0, 0.0)
+    source = FakeOverpass()
+
+    with pytest.raises(UnsupportedCountryError, match="ZZ"):
+        collect_restaurants(pg_engine, source, nowhere, radius_km=5)
+
+    assert source.bboxes == []
+    assert scalar(pg_engine, "SELECT count(*) FROM raw.ingestion_runs") == 0
 
 
 def test_failed_run_is_recorded_and_loads_nothing(pg_engine):

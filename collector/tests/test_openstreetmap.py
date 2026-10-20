@@ -11,9 +11,11 @@ from foodie_collector.sources.openstreetmap import (
     build_restaurant_query,
     parse_elements,
 )
+from foodie_collector.traditional import TraditionalRule, traditional_rule
 
 FIXTURE = json.loads((Path(__file__).parent / "fixtures" / "overpass_porto.json").read_text())
 PORTO_BBOX = BoundingBox(41.10, -8.67, 41.19, -8.55)
+PT = traditional_rule("PT")
 
 
 def overpass_client(handler, sleeps=None, max_attempts=3):
@@ -41,11 +43,24 @@ def test_bounding_box_rejects_non_positive_radius():
         BoundingBox.around(41.0, -8.0, 0)
 
 
-def test_query_uses_south_west_north_east_order_and_center_output():
-    query = build_restaurant_query(PORTO_BBOX, 25)
-    assert query.startswith("[out:json][timeout:25];")
-    assert 'nwr["amenity"="restaurant"](41.100000,-8.670000,41.190000,-8.550000);' in query
+def test_query_sets_global_bbox_in_south_west_north_east_order_and_center_output():
+    query = build_restaurant_query(PORTO_BBOX, 25, PT)
+    assert query.startswith("[out:json][timeout:25][bbox:41.100000,-8.670000,41.190000,-8.550000];")
     assert query.endswith("out center;")
+
+
+def test_query_unions_traditional_cuisines_and_name_keywords():
+    query = build_restaurant_query(PORTO_BBOX, 25, PT)
+    assert '["cuisine"~"(^|;) *(portuguese|francesinha|regional|local) *(;|$)",i]' in query
+    assert '["name"~"tasca|tasquinha|taberna|adega|casa de pasto",i]' in query
+    assert query.count('nwr["amenity"="restaurant"]') == 2
+
+
+def test_query_follows_the_country_rule():
+    rule = TraditionalRule("XX", national_cuisines=("testish",), name_keywords=("casa",))
+    query = build_restaurant_query(PORTO_BBOX, 25, rule)
+    assert "(testish|regional|local)" in query
+    assert '["name"~"casa",i]' in query
 
 
 def test_parse_elements_uses_node_coordinates_and_way_or_relation_center():
@@ -85,7 +100,7 @@ def test_client_posts_query_and_returns_elements():
         seen["body"] = request.content.decode()
         return httpx.Response(200, json=FIXTURE)
 
-    elements = overpass_client(handler).fetch_restaurants(PORTO_BBOX)
+    elements = overpass_client(handler).fetch_restaurants(PORTO_BBOX, PT)
 
     assert len(elements) == len(FIXTURE["elements"])
     assert seen["body"].startswith("data=")
@@ -95,7 +110,7 @@ def test_client_retries_rate_limits_and_gateway_errors_with_backoff():
     responses = iter([httpx.Response(429), httpx.Response(504), httpx.Response(200, json={"elements": []})])
     sleeps = []
 
-    elements = overpass_client(lambda request: next(responses), sleeps).fetch_restaurants(PORTO_BBOX)
+    elements = overpass_client(lambda request: next(responses), sleeps).fetch_restaurants(PORTO_BBOX, PT)
 
     assert elements == []
     assert sleeps == [1.0, 2.0]
@@ -104,7 +119,7 @@ def test_client_retries_rate_limits_and_gateway_errors_with_backoff():
 def test_client_honours_retry_after_header():
     responses = iter([httpx.Response(429, headers={"Retry-After": "7"}), httpx.Response(200, json={})])
     sleeps = []
-    overpass_client(lambda request: next(responses), sleeps).fetch_restaurants(PORTO_BBOX)
+    overpass_client(lambda request: next(responses), sleeps).fetch_restaurants(PORTO_BBOX, PT)
     assert sleeps == [7.0]
 
 
@@ -117,7 +132,7 @@ def test_client_retries_transport_errors_then_gives_up():
 
     sleeps = []
     with pytest.raises(httpx.ConnectTimeout):
-        overpass_client(handler, sleeps, max_attempts=3).fetch_restaurants(PORTO_BBOX)
+        overpass_client(handler, sleeps, max_attempts=3).fetch_restaurants(PORTO_BBOX, PT)
     assert len(calls) == 3
     assert sleeps == [1.0, 2.0]
 
@@ -130,7 +145,7 @@ def test_client_does_not_retry_bad_requests():
         return httpx.Response(400, text="parse error")
 
     with pytest.raises(httpx.HTTPStatusError):
-        overpass_client(handler).fetch_restaurants(PORTO_BBOX)
+        overpass_client(handler).fetch_restaurants(PORTO_BBOX, PT)
     assert len(calls) == 1
 
 
@@ -140,4 +155,4 @@ def test_client_raises_on_overpass_runtime_error_remark():
         "remark": 'runtime error: Query timed out in "query" at line 2 after 26 seconds.',
     }
     with pytest.raises(OverpassError, match="timed out"):
-        overpass_client(lambda request: httpx.Response(200, json=payload)).fetch_restaurants(PORTO_BBOX)
+        overpass_client(lambda request: httpx.Response(200, json=payload)).fetch_restaurants(PORTO_BBOX, PT)
