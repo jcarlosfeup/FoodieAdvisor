@@ -32,3 +32,17 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run ruff check .
       - run: uv run pytest -q
+      - name: Apply db/init bootstrap SQL
+        env:
+          PGPASSWORD: foodie_ci
+        run: for f in db/init/*.sql; do psql -v ON_ERROR_STOP=1 -h localhost -U foodie -d postgres -f "$f"; done
+      - name: dbt build (models, data tests and unit tests on empty raw tables)
+        working-directory: transformations/dbt
+        env:
+          POSTGRES_USER: foodie
+          POSTGRES_PASSWORD: foodie_ci
+          POSTGRES_DB: postgres
+          POSTGRES_PORT: "5432"
+        run: |
+          uv run dbt deps --profiles-dir .
+          uv run dbt build --profiles-dir .
