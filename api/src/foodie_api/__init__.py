@@ -1,0 +1,1 @@
+"""FoodieAdvisor REST API."""

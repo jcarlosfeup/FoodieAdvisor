@@ -1,0 +1,20 @@
+[project]
+name = "foodie-api"
+version = "0.1.0"
+description = "FoodieAdvisor read-only REST API over the mart schema"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "foodie-common",
+    "uvicorn[standard]>=0.30",
+]
+
+[project.scripts]
+foodie-api = "foodie_api.main:run"
+
+[tool.uv.sources]
+foodie-common = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
