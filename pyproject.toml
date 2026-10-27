@@ -9,22 +9,26 @@ dependencies = []
 dev = [
     "foodie-common",
     "foodie-collector",
+    "foodie-api",
     "pytest>=8.3",
     "ruff>=0.6",
+    "dbt-postgres>=1.9",
+    "httpx2>=2.15",
 ]
 
 [tool.uv]
 package = false
 
 [tool.uv.workspace]
-members = ["packages/*", "collector"]
+members = ["packages/*", "collector", "api"]
 
 [tool.uv.sources]
 foodie-common = { workspace = true }
 foodie-collector = { workspace = true }
+foodie-api = { workspace = true }
 
 [tool.pytest.ini_options]
-testpaths = ["packages/foodie_common/tests", "collector/tests"]
+testpaths = ["packages/foodie_common/tests", "collector/tests", "api/tests"]
 addopts = "--import-mode=importlib"
 markers = ["integration: needs TEST_DATABASE_URL pointing at a disposable PostGIS server"]
 
@@ -36,4 +40,4 @@ target-version = "py312"
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["foodie_common", "foodie_collector"]
+known-first-party = ["foodie_common", "foodie_collector", "foodie_api"]
