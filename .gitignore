@@ -13,6 +13,7 @@ htmlcov/
 coverage.xml
 
 # Local configuration and secrets
+.claude
 .env
 .env.*
 !.env.example
